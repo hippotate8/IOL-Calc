@@ -1,13 +1,16 @@
-IOL Formula Selector v1
+IOL Formula Selector v2
 
-- Manual input: AL / K(or TK) / ACD
-- Optional OD/OS
-- Boundary clamping: always returns a recommendation
-- Photo input: camera/file picker + OCR (Tesseract.js loaded from CDN)
-- If K1/K2 are recognized, mean K is calculated automatically
-- If K and TK are both recognized, user must choose one
-- Formula table digitized from the supplied Supplementary Figure 1 (640 cells)
+Changes
+- Compact header and result area.
+- Removed subgroup/explanatory footer text.
+- Manual field label: K (or TK).
+- OD/OS remains optional without explanatory sentence.
+- Boundary clamping remains active for AL/K/ACD outside the table.
+- Enhanced photo OCR with image upscaling/contrast preprocessing and second-pass measurement-area OCR.
+- ZEISS IOLMaster 700: K uses SE first, then mean K or (K1+K2)/2. TK uses TSE first, then mean TK or (TK1+TK2)/2.
+- Generic label profiles added for Lenstar/EyeSuite, ARGOS, TOMEY OA-2000, Topcon Aladdin, OCULUS Pentacam AXL, and Ziemer GALILEI style outputs.
+- K1/K2-only outputs automatically use the arithmetic mean.
+- If both K and TK are recognized, the user must select one before applying.
 
-Important:
-Manual input and formula recommendation are fully offline after installation.
-The current photo OCR module loads Tesseract.js from the internet on first use; browser cache may allow later reuse, but fully bundled offline OCR is planned for the next iteration.
+Important
+Photo OCR should always be visually confirmed before recommendation. Device software versions and report layouts vary. Manual input and formula lookup work offline after PWA caching; the OCR engine is loaded from the internet when needed.
