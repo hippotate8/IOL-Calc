@@ -1,16 +1,13 @@
-IOL Formula Selector v2
+IOL Formula Selector v3
 
-Changes
-- Compact header and result area.
-- Removed subgroup/explanatory footer text.
-- Manual field label: K (or TK).
-- OD/OS remains optional without explanatory sentence.
-- Boundary clamping remains active for AL/K/ACD outside the table.
-- Enhanced photo OCR with image upscaling/contrast preprocessing and second-pass measurement-area OCR.
-- ZEISS IOLMaster 700: K uses SE first, then mean K or (K1+K2)/2. TK uses TSE first, then mean TK or (TK1+TK2)/2.
-- Generic label profiles added for Lenstar/EyeSuite, ARGOS, TOMEY OA-2000, Topcon Aladdin, OCULUS Pentacam AXL, and Ziemer GALILEI style outputs.
-- K1/K2-only outputs automatically use the arithmetic mean.
-- If both K and TK are recognized, the user must select one before applying.
+Changes in v3:
+- Compact Photo Recognition panel: camera icon and text on one line.
+- Photo crop workflow before OCR; drag/resize the crop rectangle.
+- OCR logic simplified from v2 and focused on AL, K/TK, ACD.
+- Physiologic plausibility filters: AL 15-40 mm, K/TK 30-60 D, ACD 1-8 mm.
+- IOLMaster-style SE is treated as mean K; fallback is mean of K1/K2. TSE/TK1/TK2 supported for TK.
+- OCR review guidance: "인식 오류가 있으면 적용 후 직접 수정하세요."
+- Input/result order: AL, K (or TK), ACD.
+- Formula recommendation table and boundary-clamping behavior preserved.
 
-Important
-Photo OCR should always be visually confirmed before recommendation. Device software versions and report layouts vary. Manual input and formula lookup work offline after PWA caching; the OCR engine is loaded from the internet when needed.
+Deployment: unzip and upload all files to the GitHub Pages repository root, replacing prior version files.
