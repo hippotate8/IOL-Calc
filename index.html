@@ -1,0 +1,204 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#008991">
+<title>IOL Formula Selector</title>
+<link rel="manifest" href="manifest.webmanifest">
+<style>
+:root{--teal:#008991;--teal2:#00747b;--mint:#edfafa;--line:#dce8e8;--text:#172227;--muted:#68777d;--warn:#9a6300;}
+*{box-sizing:border-box}
+body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Noto Sans KR",Arial,sans-serif;color:var(--text);background:#f7f9f9}
+.app{max-width:1120px;margin:0 auto;min-height:100vh;background:#fff}
+header{display:flex;align-items:center;justify-content:space-between;gap:18px;padding:20px 24px;border-bottom:1px solid #e8eeee;position:sticky;top:0;background:rgba(255,255,255,.96);backdrop-filter:blur(10px);z-index:5}
+.title h1{margin:0;color:var(--teal);font-size:30px;letter-spacing:-.5px} .title p{margin:4px 0 0;color:var(--muted);font-size:14px}
+.logos{display:flex;align-items:center;gap:12px} .logos img{object-fit:contain;max-height:58px;width:auto} .logos .eom{max-width:105px} .logos .yes{max-width:190px}
+main{padding:24px}
+.eye-row{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:16px}
+.eye-optional{color:var(--muted);font-size:13px}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:12px;padding:3px;background:#f8fbfb}
+.seg button{border:0;background:transparent;padding:9px 18px;border-radius:9px;font-size:15px;cursor:pointer}
+.seg button.active{background:var(--teal);color:#fff}
+.intro{background:var(--mint);border:1px solid #d4efef;border-radius:14px;padding:14px 16px;margin-bottom:20px;color:#28575a;font-size:14px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+.card{border:1px solid #e4ebeb;border-radius:18px;padding:22px;background:#fff;box-shadow:0 4px 18px rgba(19,50,52,.05)}
+.card h2{margin:0 0 6px;font-size:20px} .card .sub{margin:0 0 18px;color:var(--muted);font-size:13px}
+.field{margin-bottom:15px} label{display:flex;justify-content:space-between;align-items:end;font-weight:700;margin-bottom:7px} label small{font-weight:400;color:var(--muted)}
+.input-wrap{display:flex;align-items:center;border:1.5px solid #cbd9d9;border-radius:12px;overflow:hidden;background:#fff}
+.input-wrap:focus-within{border-color:var(--teal);box-shadow:0 0 0 3px rgba(0,137,145,.10)}
+.input-wrap input{width:100%;border:0;outline:0;padding:13px 14px;font-size:18px;min-width:0} .unit{padding:0 13px;color:#607277;font-weight:600}
+.btn{appearance:none;border:0;border-radius:12px;padding:13px 18px;font-weight:700;font-size:16px;cursor:pointer;min-height:48px}
+.primary{background:var(--teal);color:white;width:100%} .primary:active{background:var(--teal2)}
+.camera-card{display:flex;flex-direction:column;min-height:382px}
+.camera-zone{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;border:2px dashed #bcd5d6;border-radius:16px;background:#fbfefe;padding:22px;text-align:center;cursor:pointer}
+.camera-zone svg{width:72px;height:72px;color:var(--teal);margin-bottom:12px}
+.camera-zone strong{font-size:21px} .camera-zone span{color:var(--muted);font-size:13px;margin-top:6px;line-height:1.5}
+#photoInput{display:none} #preview{max-width:100%;max-height:210px;border-radius:10px;margin-top:12px;display:none}
+.ocr-status{font-size:13px;color:var(--muted);min-height:20px;margin-top:12px;text-align:center}
+.result{display:none;margin-top:20px;border:1px solid #cde8e9;border-radius:18px;overflow:hidden}
+.result.show{display:block}
+.result-head{padding:18px 22px;background:linear-gradient(90deg,#eefafa,#f8fdfd);display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
+.recommended small{display:block;color:var(--muted);font-weight:600;margin-bottom:4px} .formula{font-size:34px;font-weight:800;color:var(--teal)}
+.eye-tag{padding:6px 10px;border-radius:999px;background:#fff;border:1px solid #d8e9e9;color:#52686b;font-weight:700}
+.result-body{padding:20px 22px}
+.values{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.val{padding:12px;border:1px solid #e6eded;border-radius:12px} .val b{display:block;font-size:18px;margin-top:3px} .val span{font-size:12px;color:var(--muted)}
+.boundary{margin-top:14px;padding:11px 13px;border-radius:10px;background:#fff8e8;color:#75500a;font-size:13px;display:none} .boundary.show{display:block}
+.ocr-review{display:none;margin-top:14px;padding:14px;border:1px solid #dceaea;border-radius:12px;background:#f9fcfc} .ocr-review.show{display:block}
+.ocr-review h3{margin:0 0 10px;font-size:15px} .choices{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0 12px} .choice{border:1px solid #c9dddd;background:white;border-radius:10px;padding:9px 12px;cursor:pointer} .choice.active{border-color:var(--teal);background:#eafafa;color:#006f75;font-weight:700}
+.note{margin-top:18px;color:#718084;font-size:12px;line-height:1.55}
+.footer{padding:18px 24px 28px;text-align:center;color:#7f8c8f;font-size:12px}
+@media(max-width:760px){header{padding:14px 16px} .title h1{font-size:22px} .title p{font-size:12px} .logos{gap:6px} .logos .eom{max-width:68px} .logos .yes{max-width:116px} main{padding:16px} .grid{grid-template-columns:1fr} .camera-card{min-height:300px} .values{grid-template-columns:1fr} .eye-row{align-items:flex-start;flex-direction:column;gap:8px}}
+</style>
+</head>
+<body>
+<div class="app">
+<header>
+  <div class="title"><h1>IOL Formula Selector</h1><p>Biometry-driven formula recommendation</p></div>
+  <div class="logos"><img class="eom" src="eom_logo.png" alt="EOM"><img class="yes" src="yes_logo.png" alt="YES Eye Clinic"></div>
+</header>
+<main>
+  <div class="eye-row">
+    <div><div class="seg" aria-label="Eye selection">
+      <button type="button" data-eye="" class="active">선택 안함</button>
+      <button type="button" data-eye="OD">OD</button>
+      <button type="button" data-eye="OS">OS</button>
+    </div></div>
+    <div class="eye-optional">OD / OS 선택은 옵션이며 추천 결과에는 영향을 주지 않습니다.</div>
+  </div>
+  <div class="intro"><b>AL + K(or TK) + ACD</b>를 이용해 해당 biometric subgroup의 공식을 추천합니다. Table 범위를 벗어난 값은 가장 가까운 경계 subgroup을 자동 적용합니다.</div>
+  <div class="grid">
+    <section class="card">
+      <h2>Manual Input</h2><p class="sub">K 또는 TK 중 사용할 값을 K/TK 한 칸에 입력하세요.</p>
+      <div class="field"><label for="al">AL <small>Axial Length</small></label><div class="input-wrap"><input id="al" type="number" step="0.01" inputmode="decimal" placeholder="예: 23.72"><span class="unit">mm</span></div></div>
+      <div class="field"><label for="k">K / TK <small>Mean keratometry</small></label><div class="input-wrap"><input id="k" type="number" step="0.01" inputmode="decimal" placeholder="예: 43.60"><span class="unit">D</span></div></div>
+      <div class="field"><label for="acd">ACD <small>Anterior Chamber Depth</small></label><div class="input-wrap"><input id="acd" type="number" step="0.01" inputmode="decimal" placeholder="예: 3.18"><span class="unit">mm</span></div></div>
+      <button class="btn primary" id="recommendBtn">Recommend Formula</button>
+    </section>
+    <section class="card camera-card">
+      <h2>Photo Recognition</h2><p class="sub">Biometry 화면 또는 출력물을 촬영하세요.</p>
+      <label class="camera-zone" for="photoInput">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M4 7h3l1.4-2h7.2L17 7h3a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2Z"/><circle cx="12" cy="13" r="4"/></svg>
+        <strong>사진 찍기 / 불러오기</strong>
+        <span>휴대폰에서는 카메라를 사용할 수 있습니다.<br>인식된 값은 추천 전에 반드시 확인·수정할 수 있습니다.</span>
+        <img id="preview" alt="선택한 biometry 사진">
+      </label>
+      <input id="photoInput" type="file" accept="image/*" capture="environment">
+      <div class="ocr-status" id="ocrStatus"></div>
+      <div class="ocr-review" id="ocrReview">
+        <h3>인식 결과 확인</h3>
+        <div id="ocrSummary"></div>
+        <div id="kChoiceBox" style="display:none"><div style="font-size:13px;color:#667;margin-top:10px">K와 TK가 모두 인식되었습니다. 사용할 값을 선택하세요.</div><div class="choices" id="kChoices"></div></div>
+        <button class="btn primary" id="applyOcrBtn" type="button">입력창에 적용</button>
+      </div>
+    </section>
+  </div>
+  <section class="result" id="result">
+    <div class="result-head"><div class="recommended"><small>Recommended Formula</small><div class="formula" id="formula">—</div></div><div class="eye-tag" id="eyeTag" style="display:none"></div></div>
+    <div class="result-body">
+      <div class="values">
+        <div class="val"><span>AL</span><b id="rAl"></b><span id="rAlGroup"></span></div>
+        <div class="val"><span>K / TK</span><b id="rK"></b><span id="rKGroup"></span></div>
+        <div class="val"><span>ACD</span><b id="rAcd"></b><span id="rAcdGroup"></span></div>
+      </div>
+      <div class="boundary" id="boundary"></div>
+    </div>
+  </section>
+  <div class="note">Subgroups: AL 20.0–30.0 mm (0.5-mm intervals), K 40.0–48.0 D (1.0-D intervals), ACD 2.25–4.25 mm (0.5-mm intervals). Exact internal boundary values are assigned to the subgroup beginning at that boundary. This tool recommends a formula; it does not calculate IOL power.</div>
+</main>
+<div class="footer">© Hanguk EOM Inc. & YES Eye Clinic.</div>
+</div>
+<script>
+const FORMULA_TABLE=[[["Kane","EVO","EVO","Barrett"],["Kane","EVO","Barrett","Kane"],["EVO","EVO","Kane","Kane"],["EVO","EVO","Pearl-DGS","Kane"],["Hoffer QST","Barrett","Kane","Kane"],["K6","Hoffer QST","Kane","Kane"],["EVO","Hoffer QST","Kane","Kane"],["K6","EVO","Kane","Kane"]],[["K6","Kane","Kane","Barrett"],["K6","EVO","Barrett","Pearl-DGS"],["Hoffer QST","EVO","Pearl-DGS","Kane"],["K6","Barrett","Kane","Kane"],["K6","Hoffer QST","Kane","Kane"],["EVO","Hoffer QST","Kane","Kane"],["K6","EVO","Kane","Kane"],["Barrett","Pearl-DGS","Kane","Kane"]],[["Kane","EVO","Kane","EVO"],["Hoffer QST","EVO","Kane","Kane"],["K6","Kane","Kane","Kane"],["K6","Hoffer QST","Kane","Kane"],["EVO","Hoffer QST","Kane","Pearl-DGS"],["K6","Pearl-DGS","Kane","Pearl-DGS"],["K6","K6","Kane","Pearl-DGS"],["Barrett","Pearl-DGS","Hoffer QST","Pearl-DGS"]],[["Kane","Kane","EVO","EVO"],["K6","Kane","Kane","Kane"],["K6","EVO","Kane","Kane"],["K6","Hoffer QST","Kane","Pearl-DGS"],["Kane","EVO","Pearl-DGS","Pearl-DGS"],["K6","Hoffer QST","Kane","Pearl-DGS"],["Kane","Kane","Hoffer QST","Pearl-DGS"],["EVO","K6","Hoffer QST","Hoffer QST"]],[["K6","Kane","Kane","EVO"],["K6","Hoffer QST","Kane","Kane"],["Kane","EVO","Kane","Pearl-DGS"],["EVO","EVO","Kane","Pearl-DGS"],["Hoffer QST","Kane","Hoffer QST","Pearl-DGS"],["Pearl-DGS","Kane","Hoffer QST","EVO"],["Hoffer QST","Hoffer QST","Hoffer QST","Hoffer QST"],["Barrett","Kane","Kane","Hoffer QST"]],[["Kane","EVO","EVO","EVO"],["Kane","EVO","Kane","Pearl-DGS"],["Barrett","Hoffer QST","Kane","EVO"],["Kane","K6","Pearl-DGS","EVO"],["Hoffer QST","Kane","Hoffer QST","Barrett"],["K6","Hoffer QST","K6","Barrett"],["Kane","Hill-RBF","Barrett","Barrett"],["K6","Hoffer QST","Hoffer QST","Barrett"]],[["Kane","Kane","EVO","EVO"],["Kane","Hoffer QST","EVO","Pearl-DGS"],["Hoffer QST","Barrett","Pearl-DGS","Pearl-DGS"],["Kane","Kane","Hill-RBF","Pearl-DGS"],["Hoffer QST","Pearl-DGS","K6","Hill-RBF"],["Kane","K6","Hoffer QST","Hill-RBF"],["K6","Pearl-DGS","Hill-RBF","Barrett"],["K6","K6","Hill-RBF","Barrett"]],[["Kane","Kane","EVO","Pearl-DGS"],["Kane","EVO","Kane","Pearl-DGS"],["Barrett","K6","Hoffer QST","Pearl-DGS"],["EVO","K6","Hoffer QST","Pearl-DGS"],["Hoffer QST","Pearl-DGS","Kane","Hill-RBF"],["Kane","Barrett","EVO","Hill-RBF"],["Barrett","Barrett","EVO","Barrett"],["Barrett","Barrett","EVO","Barrett"]],[["Hoffer QST","EVO","EVO","Pearl-DGS"],["Hoffer QST","Pearl-DGS","K6","EVO"],["Hoffer QST","K6","K6","EVO"],["Barrett","Hill-RBF","K6","K6"],["Barrett","Pearl-DGS","Kane","Barrett"],["Barrett","Barrett","K6","Barrett"],["Barrett","Barrett","EVO","K6"],["Barrett","Hoffer QST","EVO","EVO"]],[["Hoffer QST","Kane","EVO","Pearl-DGS"],["Pearl-DGS","Hill-RBF","Barrett","Pearl-DGS"],["Hill-RBF","Pearl-DGS","Hill-RBF","K6"],["Barrett","K6","Kane","EVO"],["Barrett","Barrett","K6","Barrett"],["Barrett","K6","K6","Hill-RBF"],["Barrett","K6","EVO","Hill-RBF"],["Hoffer QST","Barrett","EVO","EVO"]],[["Barrett","K6","EVO","Pearl-DGS"],["Pearl-DGS","K6","Barrett","Hoffer QST"],["K6","Hoffer QST","Barrett","Kane"],["Kane","Barrett","Hoffer QST","Hoffer QST"],["Kane","EVO","Hoffer QST","K6"],["Pearl-DGS","Hoffer QST","Hill-RBF","Hoffer QST"],["Kane","EVO","Pearl-DGS","EVO"],["Barrett","EVO","Kane","EVO"]],[["Pearl-DGS","EVO","Pearl-DGS","Hoffer QST"],["EVO","Barrett","EVO","Hoffer QST"],["Hoffer QST","Barrett","EVO","K6"],["Hoffer QST","Barrett","EVO","Hoffer QST"],["Kane","EVO","Hoffer QST","EVO"],["Kane","Barrett","Kane","EVO"],["Barrett","EVO","Kane","EVO"],["Kane","EVO","EVO","Pearl-DGS"]],[["EVO","Hill-RBF","Hill-RBF","EVO"],["EVO","EVO","EVO","EVO"],["Kane","EVO","EVO","EVO"],["Hoffer QST","EVO","Barrett","Hill-RBF"],["Kane","EVO","Barrett","EVO"],["Kane","EVO","Barrett","EVO"],["Barrett","EVO","EVO","Pearl-DGS"],["Barrett","EVO","EVO","Pearl-DGS"]],[["Hoffer QST","EVO","Hill-RBF","Pearl-DGS"],["Pearl-DGS","EVO","EVO","Hoffer QST"],["Hoffer QST","Hoffer QST","EVO","EVO"],["Barrett","Barrett","K6","EVO"],["Barrett","Barrett","Kane","EVO"],["Kane","EVO","EVO","Pearl-DGS"],["Kane","EVO","EVO","Pearl-DGS"],["Kane","EVO","EVO","Pearl-DGS"]],[["Pearl-DGS","Pearl-DGS","Pearl-DGS","EVO"],["Hoffer QST","Hoffer QST","EVO","Pearl-DGS"],["Pearl-DGS","Hoffer QST","Hoffer QST","EVO"],["Barrett","Barrett","EVO","EVO"],["Pearl-DGS","EVO","EVO","Pearl-DGS"],["Pearl-DGS","EVO","EVO","Pearl-DGS"],["EVO","EVO","EVO","Pearl-DGS"],["Kane","EVO","Pearl-DGS","Kane"]],[["Barrett","Barrett","EVO","Pearl-DGS"],["Barrett","Barrett","EVO","EVO"],["Pearl-DGS","EVO","Barrett","K6"],["Barrett","EVO","Kane","K6"],["EVO","EVO","EVO","K6"],["EVO","EVO","EVO","Pearl-DGS"],["Pearl-DGS","Kane","Kane","Pearl-DGS"],["Kane","Kane","EVO","Kane"]],[["Pearl-DGS","Pearl-DGS","EVO","EVO"],["Kane","Pearl-DGS","EVO","K6"],["Barrett","Hoffer QST","Kane","EVO"],["Pearl-DGS","Barrett","EVO","K6"],["EVO","EVO","Pearl-DGS","EVO"],["Hoffer QST","EVO","EVO","K6"],["Pearl-DGS","Kane","Kane","Pearl-DGS"],["Pearl-DGS","Hoffer QST","Hoffer QST","K6"]],[["Kane","Pearl-DGS","Pearl-DGS","Pearl-DGS"],["Kane","Kane","Barrett","Hoffer QST"],["Barrett","Barrett","EVO","Pearl-DGS"],["Barrett","Hoffer QST","Pearl-DGS","Pearl-DGS"],["Hoffer QST","EVO","EVO","EVO"],["EVO","Pearl-DGS","Pearl-DGS","Pearl-DGS"],["Pearl-DGS","Pearl-DGS","Pearl-DGS","Pearl-DGS"],["Pearl-DGS","Pearl-DGS","EVO","Pearl-DGS"]],[["Kane","Pearl-DGS","EVO","Barrett"],["Pearl-DGS","Kane","EVO","EVO"],["Hoffer QST","Barrett","Hoffer QST","Hoffer QST"],["EVO","EVO","Hoffer QST","Hoffer QST"],["Pearl-DGS","EVO","Pearl-DGS","EVO"],["Pearl-DGS","EVO","Pearl-DGS","K6"],["EVO","K6","K6","K6"],["Pearl-DGS","Kane","Kane","Kane"]],[["Kane","Kane","Pearl-DGS","Barrett"],["Barrett","EVO","Kane","Barrett"],["Barrett","Barrett","EVO","Hoffer QST"],["Pearl-DGS","EVO","EVO","EVO"],["EVO","EVO","K6","K6"],["EVO","K6","K6","K6"],["EVO","Barrett","Kane","Barrett"],["K6","K6","K6","K6"]]];
+let eye="";
+document.querySelectorAll('[data-eye]').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('[data-eye]').forEach(x=>x.classList.remove('active'));b.classList.add('active');eye=b.dataset.eye;}));
+
+function clamp(v,min,max){return Math.min(max,Math.max(min,v));}
+function idx(v,min,step,count){let c=clamp(v,min,min+step*count); if(c>=min+step*count) return count-1; return Math.floor((c-min)/step);}
+function fmt(n,d=2){return Number(n).toFixed(d);}
+function recommend(al,k,acd){
+  const ai=idx(al,20,0.5,20), ki=idx(k,40,1,8), di=idx(acd,2.25,0.5,4);
+  return {formula:FORMULA_TABLE[ai][ki][di],ai,ki,di,
+    alLo:20+ai*.5,alHi:20+(ai+1)*.5,kLo:40+ki,kHi:41+ki,acdLo:2.25+di*.5,acdHi:2.25+(di+1)*.5,
+    clamped:{al:al<20||al>30,k:k<40||k>48,acd:acd<2.25||acd>4.25}
+  };
+}
+function showRecommendation(){
+  const al=parseFloat(document.getElementById('al').value), k=parseFloat(document.getElementById('k').value), acd=parseFloat(document.getElementById('acd').value);
+  if(!Number.isFinite(al)||!Number.isFinite(k)||!Number.isFinite(acd) || al<=0 || k<=0 || acd<=0){alert('AL, K/TK, ACD 값을 모두 확인해주세요.');return;}
+  const r=recommend(al,k,acd);
+  document.getElementById('formula').textContent=r.formula;
+  document.getElementById('rAl').textContent=fmt(al)+' mm'; document.getElementById('rAlGroup').textContent=`Applied subgroup: ${r.alLo.toFixed(1)}–${r.alHi.toFixed(1)} mm`;
+  document.getElementById('rK').textContent=fmt(k)+' D'; document.getElementById('rKGroup').textContent=`Applied subgroup: ${r.kLo.toFixed(1)}–${r.kHi.toFixed(1)} D`;
+  document.getElementById('rAcd').textContent=fmt(acd)+' mm'; document.getElementById('rAcdGroup').textContent=`Applied subgroup: ${r.acdLo.toFixed(2)}–${r.acdHi.toFixed(2)} mm`;
+  const tag=document.getElementById('eyeTag'); tag.style.display=eye?'block':'none'; tag.textContent=eye;
+  const msgs=[];
+  if(r.clamped.al) msgs.push(`AL ${fmt(al)} mm → table ${al<20?'lower':'upper'} boundary subgroup 적용`);
+  if(r.clamped.k) msgs.push(`K/TK ${fmt(k)} D → table ${k<40?'lower':'upper'} boundary subgroup 적용`);
+  if(r.clamped.acd) msgs.push(`ACD ${fmt(acd)} mm → table ${acd<2.25?'lower':'upper'} boundary subgroup 적용`);
+  const bd=document.getElementById('boundary'); bd.classList.toggle('show',msgs.length>0); bd.innerHTML=msgs.length?'<b>Boundary rule:</b> '+msgs.join('<br>'):'';
+  const res=document.getElementById('result'); res.classList.add('show'); res.scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+document.getElementById('recommendBtn').addEventListener('click',showRecommendation);
+['al','k','acd'].forEach(id=>document.getElementById(id).addEventListener('keydown',e=>{if(e.key==='Enter')showRecommendation();}));
+
+let ocr={al:null,acd:null,k:null,tk:null,k1:null,k2:null,tk1:null,tk2:null,selectedK:null};
+function nearestNumber(text, labelRegex, min, max){
+ const lines=text.split(/\n+/);
+ for(let i=0;i<lines.length;i++){ if(labelRegex.test(lines[i])){
+   const scope=[lines[i],lines[i+1]||'',lines[i-1]||''].join(' ');
+   const nums=(scope.match(/\d{1,3}(?:[.,]\d{1,3})?/g)||[]).map(x=>parseFloat(x.replace(',','.'))).filter(x=>x>=min&&x<=max);
+   if(nums.length) return nums[0];
+ }}
+ return null;
+}
+function parseBiometry(text){
+ let t=text.replace(/,/g,'.').replace(/\r/g,'');
+ const al=nearestNumber(t,/\b(?:AL|AXIAL\s*LENGTH)\b/i,15,40);
+ const acd=nearestNumber(t,/\b(?:ACD|ANTERIOR\s*CHAMBER\s*DEPTH)\b/i,1,8);
+ function val(re,min=30,max=60){const m=t.match(re); if(!m)return null; const n=parseFloat((m[1]||m[2]||'').replace(',','.')); return n>=min&&n<=max?n:null;}
+ const k1=val(/\bK\s*1\b[^\d]{0,18}(\d{2}(?:\.\d{1,3})?)/i);
+ const k2=val(/\bK\s*2\b[^\d]{0,18}(\d{2}(?:\.\d{1,3})?)/i);
+ const tk1=val(/\bTK\s*1\b[^\d]{0,18}(\d{2}(?:\.\d{1,3})?)/i);
+ const tk2=val(/\bTK\s*2\b[^\d]{0,18}(\d{2}(?:\.\d{1,3})?)/i);
+ let k=val(/\b(?:Km|Kmean|Mean\s*K|K\s*avg|K)\b[^\d]{0,18}(\d{2}(?:\.\d{1,3})?)/i);
+ let tk=val(/\b(?:TKm|TKmean|Mean\s*TK|TK\s*avg|TK)\b[^\d]{0,18}(\d{2}(?:\.\d{1,3})?)/i);
+ if(k1&&k2) k=(k1+k2)/2;
+ if(tk1&&tk2) tk=(tk1+tk2)/2;
+ return {al,acd,k,tk,k1,k2,tk1,tk2,selectedK:(k&&tk)?null:(tk||k)};
+}
+function renderOcr(){
+ const rv=document.getElementById('ocrReview'), s=document.getElementById('ocrSummary'), kb=document.getElementById('kChoiceBox'), choices=document.getElementById('kChoices');
+ const line=(name,val,unit)=>`<div style="display:flex;justify-content:space-between;padding:5px 0"><b>${name}</b><span>${val!=null?Number(val).toFixed(2)+' '+unit:'인식 안됨'}</span></div>`;
+ s.innerHTML=line('AL',ocr.al,'mm')+line('ACD',ocr.acd,'mm')+(ocr.k1&&ocr.k2?line('Mean K (K1/K2)',ocr.k,'D'):line('K',ocr.k,'D'))+(ocr.tk!=null?line('TK',ocr.tk,'D'):'');
+ choices.innerHTML=''; kb.style.display=(ocr.k!=null&&ocr.tk!=null)?'block':'none';
+ if(ocr.k!=null&&ocr.tk!=null){[['K',ocr.k],['TK',ocr.tk]].forEach(([n,v])=>{const b=document.createElement('button');b.type='button';b.className='choice';b.textContent=`${n} ${v.toFixed(2)} D`;b.addEventListener('click',()=>{ocr.selectedK=v;choices.querySelectorAll('.choice').forEach(x=>x.classList.remove('active'));b.classList.add('active')});choices.appendChild(b);})}
+ rv.classList.add('show');
+}
+async function loadTesseract(){
+ if(window.Tesseract) return true;
+ document.getElementById('ocrStatus').textContent='사진 인식 엔진을 불러오는 중…';
+ return new Promise(resolve=>{const s=document.createElement('script');s.src='https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js';s.onload=()=>resolve(true);s.onerror=()=>resolve(false);document.head.appendChild(s);});
+}
+document.getElementById('photoInput').addEventListener('change',async e=>{
+ const f=e.target.files&&e.target.files[0]; if(!f)return;
+ const p=document.getElementById('preview'); p.src=URL.createObjectURL(f);p.style.display='block';
+ const status=document.getElementById('ocrStatus'); status.textContent='사진 분석 준비 중…';
+ const ok=await loadTesseract(); if(!ok){status.textContent='자동 인식 엔진을 불러오지 못했습니다. 직접 입력은 정상 사용 가능합니다.';return;}
+ try{
+  const result=await Tesseract.recognize(f,'eng',{logger:m=>{if(m.status==='recognizing text') status.textContent=`사진 인식 중… ${Math.round((m.progress||0)*100)}%`;}});
+  ocr=parseBiometry(result.data.text||''); status.textContent='인식 완료 — 아래 값을 확인해주세요.'; renderOcr();
+ }catch(err){console.error(err);status.textContent='자동 인식에 실패했습니다. 다시 촬영하거나 직접 입력해주세요.';}
+});
+document.getElementById('applyOcrBtn').addEventListener('click',()=>{
+ if(ocr.al!=null) document.getElementById('al').value=ocr.al.toFixed(2);
+ if(ocr.acd!=null) document.getElementById('acd').value=ocr.acd.toFixed(2);
+ let kval=ocr.selectedK!=null?ocr.selectedK:(ocr.tk!=null&&ocr.k==null?ocr.tk:ocr.k);
+ if(ocr.k!=null&&ocr.tk!=null&&ocr.selectedK==null){alert('K 또는 TK를 선택해주세요.');return;}
+ if(kval!=null) document.getElementById('k').value=kval.toFixed(2);
+ window.scrollTo({top:0,behavior:'smooth'});
+});
+if('serviceWorker' in navigator) window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));
+</script>
+</body></html>
