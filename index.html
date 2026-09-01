@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#008991">
 <title>IOL Formula Selector</title>
-<meta name="app-version" content="13.0">
+<meta name="app-version" content="14.0">
 <style>
 :root{--teal:#008991;--teal2:#00747b;--mint:#edfafa;--line:#dce8e8;--text:#172227;--muted:#68777d}
 *{box-sizing:border-box} body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Noto Sans KR",Arial,sans-serif;color:var(--text);background:#f7f9f9}.app{max-width:1120px;margin:0 auto;min-height:100vh;background:#fff}
@@ -49,6 +49,12 @@ body.crop-locked .crop-panel.show .crop-stage canvas{
 body.crop-locked .crop-panel.show .crop-actions{
  flex:0 0 auto;
  justify-content:center;
+}
+
+
+#ocrReview.show{scroll-margin-top:24px;scroll-margin-bottom:24px}
+@media(max-width:760px){
+ #ocrReview.show{box-shadow:0 8px 28px rgba(24,102,105,.18)}
 }
 
 </style>
@@ -96,6 +102,34 @@ let cropDrag=null;
 const PHYS={al:[15,40],acd:[1,8],k:[30,60]};
 function plausible(v,[lo,hi]){return Number.isFinite(v)&&v>=lo&&v<=hi?v:null}
 function cleanText(t){return String(t||'').replace(/,/g,'.').replace(/\r/g,'').replace(/[|]/g,'I')}
+function normalizeOcrLabels(t){
+ return cleanText(t)
+  .replace(/\bA\s*[1I]\b/gi,'AL')
+  .replace(/\bA\s+L\b/gi,'AL')
+  .replace(/\bA[C6G]\s*[D0O]\b/gi,'ACD')
+  .replace(/\bA\s*C\s*D\b/gi,'ACD')
+  .replace(/\bK\s*[Il|]\b/gi,'K1')
+  .replace(/\bK\s*[Zz]\b/gi,'K2')
+  .replace(/\bT\s*K\s*[Il|]\b/gi,'TK1')
+  .replace(/\bT\s*K\s*[Zz]\b/gi,'TK2')
+  .replace(/\bS\s*[E3]\b/gi,'SE')
+  .replace(/\bT\s*S\s*[E3]\b/gi,'TSE');
+}
+function looseLabeledNumber(text,labelRe,min,max){
+ const lines=normalizeOcrLabels(text).split(/\n+/).map(x=>x.trim()).filter(Boolean);
+ for(let i=0;i<lines.length;i++){
+  if(labelRe.test(lines[i])){
+   const same=numsIn(lines[i],min,max);
+   if(same.length)return same[0];
+   for(let j=i+1;j<Math.min(lines.length,i+3);j++){
+    const next=numsIn(lines[j],min,max);
+    if(next.length)return next[0];
+   }
+  }
+ }
+ return null;
+}
+
 function numsIn(s,min,max){return (String(s).match(/\d{1,3}(?:\.\d{1,3})?/g)||[]).map(Number).filter(n=>n>=min&&n<=max)}
 function nearestNumber(text,labelRegex,min,max){
  const lines=cleanText(text).split(/\n+/);
@@ -106,28 +140,68 @@ function nearestNumber(text,labelRegex,min,max){
 }
 function val(text,re,min=30,max=60){const m=cleanText(text).match(re);if(!m)return null;return plausible(parseFloat(m[1]),[min,max])}
 function parseBiometry(text){
- const t=cleanText(text);
- const al=nearestNumber(t,/\b(?:AL|AXIAL\s*(?:LENGTH|LEN))\b/i,...PHYS.al);
+ const t=normalizeOcrLabels(text);
+
+ let al=nearestNumber(t,/\b(?:AL|AXIAL\s*(?:LENGTH|LEN))\b/i,...PHYS.al);
+ if(al==null)al=looseLabeledNumber(t,/\bAL\b/i,...PHYS.al);
+
  let acd=nearestNumber(t,/\b(?:ACD|ANTERIOR\s*CHAMBER\s*DEPTH)\b/i,...PHYS.acd);
- const se=val(t,/(?:^|\n)\s*S[E3]\s*[:=]?\s*(\d{2}(?:\.\d{1,3})?)/im);
- const tse=val(t,/(?:^|\n)\s*T[S5][E3]\s*[:=]?\s*(\d{2}(?:\.\d{1,3})?)/im);
- const k1=val(t,/\bK\s*1\b[^\d]{0,20}(\d{2}(?:\.\d{1,3})?)/i);
- const k2=val(t,/\bK\s*2\b[^\d]{0,20}(\d{2}(?:\.\d{1,3})?)/i);
- const tk1=val(t,/\bT\s*K\s*1\b[^\d]{0,20}(\d{2}(?:\.\d{1,3})?)/i);
- const tk2=val(t,/\bT\s*K\s*2\b[^\d]{0,20}(\d{2}(?:\.\d{1,3})?)/i);
+ if(acd==null)acd=looseLabeledNumber(t,/\bACD\b/i,...PHYS.acd);
+
+ const se=val(t,/(?:^|\n)\s*SE\s*[:=]?\s*(\d{2}(?:\.\d{1,3})?)/im);
+ const tse=val(t,/(?:^|\n)\s*TSE\s*[:=]?\s*(\d{2}(?:\.\d{1,3})?)/im);
+ const k1=val(t,/\bK\s*1\b[^\d]{0,24}(\d{2}(?:\.\d{1,3})?)/i);
+ const k2=val(t,/\bK\s*2\b[^\d]{0,24}(\d{2}(?:\.\d{1,3})?)/i);
+ const tk1=val(t,/\bT\s*K\s*1\b[^\d]{0,24}(\d{2}(?:\.\d{1,3})?)/i);
+ const tk2=val(t,/\bT\s*K\s*2\b[^\d]{0,24}(\d{2}(?:\.\d{1,3})?)/i);
+
  let meanK=val(t,/(?:^|\n)\s*(?:KM|K\s*MEAN|MEAN\s*K|AVG\.?\s*K|K\s*AVG|K)\s*[:=]?\s*(\d{2}(?:\.\d{1,3})?)/im);
  let meanTK=val(t,/(?:^|\n)\s*(?:TKM|TK\s*MEAN|MEAN\s*TK|AVG\.?\s*TK|TK\s*AVG|TK)\s*[:=]?\s*(\d{2}(?:\.\d{1,3})?)/im);
+
  const looksIOLMaster=/IOL\s*MASTER|IOLMASTER|\bTSE\b|\bTK1\b/i.test(t);
  let k=looksIOLMaster&&se!=null?se:(meanK!=null?meanK:(k1!=null&&k2!=null?(k1+k2)/2:null));
  let tk=looksIOLMaster&&tse!=null?tse:(meanTK!=null?meanTK:(tk1!=null&&tk2!=null?(tk1+tk2)/2:null));
- // IOLMaster-type output: SE is mean K. If SE is lost, K1/K2 mean is the fallback.
+
  if(k==null&&k1!=null&&k2!=null)k=(k1+k2)/2;
  if(tk==null&&tk1!=null&&tk2!=null)tk=(tk1+tk2)/2;
- // ACD fallback only near AL/ACD area, guarded by physiologic range.
- if(acd==null){const lines=t.split(/\n+/);const ai=lines.findIndex(x=>/\bAL\b/i.test(x));if(ai>=0){for(let i=ai+1;i<Math.min(lines.length,ai+4);i++){if(/\bLT\b|WTW/i.test(lines[i]))break;const ns=numsIn(lines[i],1.5,5.5);if(ns.length){acd=ns[0];break}}}}
- k=plausible(k,PHYS.k);tk=plausible(tk,PHYS.k);acd=plausible(acd,PHYS.acd);
+
+ // Loose K fallback: search around K/SE label, but keep physiologic range.
+ if(k==null){
+  const kv=looseLabeledNumber(t,/(?:^|\s)(?:SE|K|K1|K2)(?:\s|$)/i,30,60);
+  if(kv!=null)k=kv;
+ }
+ if(tk==null){
+  const tkv=looseLabeledNumber(t,/(?:^|\s)(?:TSE|TK|TK1|TK2)(?:\s|$)/i,30,60);
+  if(tkv!=null)tk=tkv;
+ }
+
+ // ACD fallback close to AL block.
+ if(acd==null){
+  const lines=t.split(/\n+/);
+  const ai=lines.findIndex(x=>/\bAL\b/i.test(x));
+  if(ai>=0){
+   for(let i=ai+1;i<Math.min(lines.length,ai+5);i++){
+    if(/\bLT\b|WTW/i.test(lines[i]))break;
+    const ns=numsIn(lines[i],1.5,5.5);
+    if(ns.length){acd=ns[0];break}
+   }
+  }
+ }
+
+ // Last-resort AL fallback: a unique 15–40 mm value near an AL-looking line.
+ if(al==null){
+  const lines=t.split(/\n+/);
+  for(let i=0;i<lines.length;i++){
+   if(/AX|A.?L/i.test(lines[i])){
+    const ns=numsIn(lines[i]+' '+(lines[i+1]||''),15,40);
+    if(ns.length){al=ns[0];break}
+   }
+  }
+ }
+
+ k=plausible(k,PHYS.k);tk=plausible(tk,PHYS.k);acd=plausible(acd,PHYS.acd);al=plausible(al,PHYS.al);
  const both=k!=null&&tk!=null;
- return{al:plausible(al,PHYS.al),acd,k,tk,k1,k2,tk1,tk2,se,tse,selectedK:both?null:(tk!=null?tk:k),selectedSource:both?null:(tk!=null?'TK':'K')};
+ return{al,acd,k,tk,k1,k2,tk1,tk2,se,tse,selectedK:both?null:(tk!=null?tk:k),selectedSource:both?null:(tk!=null?'TK':'K')};
 }
 function renderOcr(){
  const rv=document.getElementById('ocrReview'),s=document.getElementById('ocrSummary'),kb=document.getElementById('kChoiceBox'),choices=document.getElementById('kChoices');
@@ -139,6 +213,22 @@ function renderOcr(){
  if(ocr.k!=null&&ocr.tk!=null){[['K',ocr.k],['TK',ocr.tk]].forEach(([n,v])=>{const b=document.createElement('button');b.type='button';b.className='choice';b.textContent=`${n} ${v.toFixed(2)} D`;b.addEventListener('click',()=>{ocr.selectedK=v;ocr.selectedSource=n;choices.querySelectorAll('.choice').forEach(x=>x.classList.remove('active'));b.classList.add('active')});choices.appendChild(b)})}
  rv.classList.add('show');
 }
+
+function showOcrReviewCentered(){
+ const panel=document.getElementById('cropPanel');
+ if(panel)panel.classList.remove('show');
+ const rv=document.getElementById('ocrReview');
+ requestAnimationFrame(()=>{
+  requestAnimationFrame(()=>{
+   if(rv){
+    const rect=rv.getBoundingClientRect();
+    const target=Math.max(0,(window.scrollY||window.pageYOffset||0)+rect.top-(window.innerHeight-rect.height)/2);
+    window.scrollTo({top:target,behavior:'smooth'});
+   }
+  });
+ });
+}
+
 async function loadTesseract(){if(window.Tesseract)return true;document.getElementById('ocrStatus').textContent='사진 인식 엔진을 불러오는 중…';return new Promise(resolve=>{const s=document.createElement('script');s.src='https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js';s.onload=()=>resolve(true);s.onerror=()=>resolve(false);document.head.appendChild(s)})}
 async function loadImageFile(file){return new Promise((resolve,reject)=>{const img=new Image();const u=URL.createObjectURL(file);img.onload=()=>{URL.revokeObjectURL(u);resolve(img)};img.onerror=reject;img.src=u})}
 function drawCropPreview(){if(!cropImage)return;const c=document.getElementById('cropCanvas'),maxW=1100,scale=Math.min(1,maxW/cropImage.naturalWidth);c.width=Math.max(1,Math.round(cropImage.naturalWidth*scale));c.height=Math.max(1,Math.round(cropImage.naturalHeight*scale));const ctx=c.getContext('2d');ctx.drawImage(cropImage,0,0,c.width,c.height);placeCropBox()}
@@ -163,7 +253,7 @@ document.addEventListener('wheel',e=>{
 
 document.getElementById('resetCropBtn').addEventListener('click',resetCrop);
 function croppedProcessedCanvas(){const img=cropImage,sx=Math.round(img.naturalWidth*cropRect.x),sy=Math.round(img.naturalHeight*cropRect.y),sw=Math.max(1,Math.round(img.naturalWidth*cropRect.w)),sh=Math.max(1,Math.round(img.naturalHeight*cropRect.h));let scale=Math.max(1,Math.min(6,1800/sw));if(sw<700)scale=Math.min(7,scale*1.35);const c=document.createElement('canvas');c.width=Math.round(sw*scale);c.height=Math.round(sh*scale);const x=c.getContext('2d',{willReadFrequently:true});x.imageSmoothingEnabled=true;x.imageSmoothingQuality='high';x.drawImage(img,sx,sy,sw,sh,0,0,c.width,c.height);const d=x.getImageData(0,0,c.width,c.height),p=d.data;let lo=255,hi=0;for(let i=0;i<p.length;i+=4){const g=Math.round(.299*p[i]+.587*p[i+1]+.114*p[i+2]);p[i]=p[i+1]=p[i+2]=g;lo=Math.min(lo,g);hi=Math.max(hi,g)}const span=Math.max(30,hi-lo);for(let i=0;i<p.length;i+=4){let g=(p[i]-lo)*255/span;g=(g-128)*1.25+128;g=Math.max(0,Math.min(255,g));p[i]=p[i+1]=p[i+2]=g}x.putImageData(d,0,0);return c}
-async function runCropOcr(){if(!cropImage)return;unlockCropScreen();const status=document.getElementById('ocrStatus');const ok=await loadTesseract();if(!ok){status.textContent='자동 인식 엔진을 불러오지 못했습니다. 직접 입력은 정상 사용 가능합니다.';return}try{const canvas=croppedProcessedCanvas();const result=await Tesseract.recognize(canvas,'eng',{logger:m=>{if(m.status==='recognizing text')status.textContent=`선택 영역 인식 중… ${Math.round((m.progress||0)*100)}%`}});ocr=parseBiometry(result.data.text||'');status.textContent='인식 완료 — 아래 값을 확인해주세요.';renderOcr()}catch(err){console.error(err);status.textContent='자동 인식에 실패했습니다. 영역을 다시 선택하거나 직접 입력해주세요.'}}
+async function runCropOcr(){if(!cropImage)return;unlockCropScreen();const status=document.getElementById('ocrStatus');const ok=await loadTesseract();if(!ok){status.textContent='자동 인식 엔진을 불러오지 못했습니다. 직접 입력은 정상 사용 가능합니다.';return}try{const canvas=croppedProcessedCanvas();const result=await Tesseract.recognize(canvas,'eng',{logger:m=>{if(m.status==='recognizing text')status.textContent=`선택 영역 인식 중… ${Math.round((m.progress||0)*100)}%`}});ocr=parseBiometry(result.data.text||'');status.textContent='인식 완료 — 아래 값을 확인해주세요.';renderOcr();showOcrReviewCentered()}catch(err){console.error(err);status.textContent='자동 인식에 실패했습니다. 영역을 다시 선택하거나 직접 입력해주세요.'}}
 document.getElementById('recognizeCropBtn').addEventListener('click',runCropOcr);
 
 let cropScrollY=0;
