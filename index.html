@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#008991">
 <title>IOL Formula Selector</title>
-<meta name="app-version" content="15.0">
+<meta name="app-version" content="16.0">
 <style>
 :root{--teal:#008991;--teal2:#00747b;--mint:#edfafa;--line:#dce8e8;--text:#172227;--muted:#68777d}
 *{box-sizing:border-box} body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Noto Sans KR",Arial,sans-serif;color:var(--text);background:#f7f9f9}.app{max-width:1120px;margin:0 auto;min-height:100vh;background:#fff}
@@ -69,6 +69,12 @@ body.crop-locked .crop-panel.show .crop-actions{
 .camera-modal-actions{display:grid;grid-template-columns:1fr 1.5fr;gap:10px}
 @media(max-width:760px){.camera-actions-top{grid-template-columns:1fr 1fr}.file-button{padding:12px}}
 
+
+.camera-button strong{white-space:nowrap;word-break:keep-all}
+@media(max-width:420px){
+  .camera-button strong{font-size:14px}
+}
+
 </style>
 </head>
 <body>
@@ -87,7 +93,7 @@ body.crop-locked .crop-panel.show .crop-actions{
     </section>
     <section class="card camera-card"><h2>Photo Recognition</h2><p class="sub">Biometry 화면 또는 출력물을 촬영하세요.</p>
       <div class="camera-actions-top">
-        <button class="camera-zone camera-button" id="openCameraBtn" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M4 7h3l1.4-2h7.2L17 7h3a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2Z"/><circle cx="12" cy="13" r="4"/></svg><strong>사진 찍기</strong></button>
+        <button class="camera-zone camera-button" id="openCameraBtn" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M4 7h3l1.4-2h7.2L17 7h3a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2Z"/><circle cx="12" cy="13" r="4"/></svg><strong id="captureModeLabel">사진 찍기</strong></button>
         <label class="camera-zone file-button" for="photoInput"><strong>사진 불러오기</strong></label>
       </div>
       <input id="photoInput" type="file" accept="image/*"><div class="ocr-status" id="ocrStatus"></div>
@@ -350,44 +356,107 @@ function unlockCropScreen(){
 }
 
 
+
 let cameraStream=null;
+let captureMode='camera';
+
+function isDesktopCaptureMode(){
+ return window.matchMedia('(pointer:fine)').matches && window.innerWidth>=768;
+}
+
+function updateCaptureModeUI(){
+ captureMode=isDesktopCaptureMode()?'screen':'camera';
+ const label=document.getElementById('captureModeLabel');
+ const captureBtn=document.getElementById('captureCameraBtn');
+ if(label)label.textContent=captureMode==='screen'?'스크린 캡쳐':'사진 찍기';
+ if(captureBtn)captureBtn.textContent=captureMode==='screen'?'캡쳐':'촬영';
+}
+
 async function openLiveCamera(){
- const modal=document.getElementById('cameraModal'),video=document.getElementById('cameraVideo'),status=document.getElementById('ocrStatus');
+ updateCaptureModeUI();
+ const modal=document.getElementById('cameraModal');
+ const video=document.getElementById('cameraVideo');
+ const status=document.getElementById('ocrStatus');
+
+ if(captureMode==='screen'){
+   if(!navigator.mediaDevices || !navigator.mediaDevices.getDisplayMedia){
+     status.textContent='이 브라우저에서는 스크린 캡쳐를 지원하지 않습니다. 사진 불러오기를 사용해주세요.';
+     return;
+   }
+   try{
+     cameraStream=await navigator.mediaDevices.getDisplayMedia({
+       video:{cursor:'always'},
+       audio:false
+     });
+     video.srcObject=cameraStream;
+     modal.classList.add('show');
+     modal.setAttribute('aria-hidden','false');
+     const track=cameraStream.getVideoTracks()[0];
+     if(track)track.addEventListener('ended',closeLiveCamera,{once:true});
+   }catch(err){
+     console.error(err);
+     status.textContent='스크린 캡쳐가 취소되었거나 화면 공유 권한을 사용할 수 없습니다.';
+   }
+   return;
+ }
+
  if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){
    status.textContent='이 브라우저에서는 카메라 직접 촬영을 지원하지 않습니다. 사진 불러오기를 사용해주세요.';
    return;
  }
  try{
-   cameraStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'},width:{ideal:1920},height:{ideal:1080}},audio:false});
+   cameraStream=await navigator.mediaDevices.getUserMedia({
+     video:{facingMode:{ideal:'environment'},width:{ideal:1920},height:{ideal:1080}},
+     audio:false
+   });
    video.srcObject=cameraStream;
-   modal.classList.add('show');modal.setAttribute('aria-hidden','false');
+   modal.classList.add('show');
+   modal.setAttribute('aria-hidden','false');
  }catch(err){
    console.error(err);
    status.textContent='카메라를 열 수 없습니다. 브라우저 카메라 권한을 확인해주세요.';
  }
 }
+
 function closeLiveCamera(){
- const modal=document.getElementById('cameraModal'),video=document.getElementById('cameraVideo');
- if(cameraStream){cameraStream.getTracks().forEach(t=>t.stop());cameraStream=null}
- video.srcObject=null;modal.classList.remove('show');modal.setAttribute('aria-hidden','true');
+ const modal=document.getElementById('cameraModal');
+ const video=document.getElementById('cameraVideo');
+ if(cameraStream){
+   cameraStream.getTracks().forEach(t=>t.stop());
+   cameraStream=null;
+ }
+ video.srcObject=null;
+ modal.classList.remove('show');
+ modal.setAttribute('aria-hidden','true');
 }
+
 async function useCapturedImage(){
  const video=document.getElementById('cameraVideo');
  if(!video.videoWidth||!video.videoHeight)return;
- const c=document.createElement('canvas');c.width=video.videoWidth;c.height=video.videoHeight;
+ const c=document.createElement('canvas');
+ c.width=video.videoWidth;
+ c.height=video.videoHeight;
  c.getContext('2d').drawImage(video,0,0,c.width,c.height);
+
  const img=new Image();
- const data=c.toDataURL('image/jpeg',.94);
+ const data=c.toDataURL('image/jpeg',.96);
  await new Promise((resolve,reject)=>{img.onload=resolve;img.onerror=reject;img.src=data});
- cropImage=img;closeLiveCamera();resetCrop();drawCropPreview();
+
+ cropImage=img;
+ closeLiveCamera();
+ resetCrop();
+ drawCropPreview();
  document.getElementById('cropPanel').classList.add('show');
  document.getElementById('ocrReview').classList.remove('show');
  document.getElementById('ocrStatus').textContent='인식할 영역을 조절한 뒤 “선택 영역 인식”을 누르세요.';
  lockCropScreen();
 }
+
 document.getElementById('openCameraBtn').addEventListener('click',openLiveCamera);
 document.getElementById('closeCameraBtn').addEventListener('click',closeLiveCamera);
 document.getElementById('captureCameraBtn').addEventListener('click',()=>{useCapturedImage().catch(console.error)});
+window.addEventListener('resize',updateCaptureModeUI);
+updateCaptureModeUI();
 
 document.getElementById('photoInput').addEventListener('change',async e=>{const f=e.target.files&&e.target.files[0];if(!f)return;try{cropImage=await loadImageFile(f);resetCrop();drawCropPreview();document.getElementById('cropPanel').classList.add('show');document.getElementById('ocrReview').classList.remove('show');document.getElementById('ocrStatus').textContent='인식할 영역을 조절한 뒤 “선택 영역 인식”을 누르세요.';lockCropScreen()}catch(err){console.error(err);document.getElementById('ocrStatus').textContent='사진을 불러오지 못했습니다.'}});
 
