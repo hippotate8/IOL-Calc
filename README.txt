@@ -1,10 +1,10 @@
-IOL Formula Selector v8
+IOL Formula Selector v9
 
-GitHub Pages:
-1. 이 ZIP을 압축 해제합니다.
-2. 저장소 root의 기존 파일을 v8 파일로 교체합니다.
-3. 특히 index.html, sw.js, manifest.webmanifest를 반드시 함께 업로드합니다.
-4. Commit 후 GitHub Pages 배포 완료를 기다립니다.
+수정:
+- Recommend Formula 버튼이 작동하지 않던 원인 수정.
+  삭제된 eyeTag 요소를 JavaScript가 계속 참조하면서 오류가 발생했고,
+  그 때문에 추천 결과를 표시하기 직전에 실행이 중단되었습니다.
+- pink fixed-bottom Recommended Formula card, 초기화 버튼, crop 여백/배경 touch 무시 기능 유지.
+- service worker cache version v9로 갱신.
 
-v8은 기존 오래된 service-worker cache를 삭제하고 HTML을 network-first로 갱신합니다.
-첫 접속 시 이전 service worker가 활성화되어 있었다면 한 번 자동 reload될 수 있습니다.
+GitHub Pages에는 index.html, sw.js, manifest.webmanifest 포함 모든 파일을 repository root에 덮어쓰세요.

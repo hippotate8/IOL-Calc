@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#008991">
 <title>IOL Formula Selector</title>
-<meta name="app-version" content="8.0">
+<meta name="app-version" content="9.0">
 <link rel="manifest" href="manifest.webmanifest">
 <style>
 :root{--teal:#008991;--teal2:#00747b;--mint:#edfafa;--line:#dce8e8;--text:#172227;--muted:#68777d}
@@ -49,7 +49,7 @@ let eye="";let lastKSource="K/TK";
 document.querySelectorAll('[data-eye]').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('[data-eye]').forEach(x=>x.classList.remove('active'));b.classList.add('active');eye=b.dataset.eye;}));
 function clamp(v,min,max){return Math.min(max,Math.max(min,v))}function idx(v,min,step,count){let c=clamp(v,min,min+step*count);if(c>=min+step*count)return count-1;return Math.floor((c-min)/step)}function fmt(n,d=2){return Number(n).toFixed(d)}
 function recommend(al,k,acd){const ai=idx(al,20,.5,20),ki=idx(k,40,1,8),di=idx(acd,2.25,.5,4);return FORMULA_TABLE[ai][ki][di]}
-function showRecommendation(){const al=parseFloat(document.getElementById('al').value),k=parseFloat(document.getElementById('k').value),acd=parseFloat(document.getElementById('acd').value);if(!Number.isFinite(al)||!Number.isFinite(k)||!Number.isFinite(acd)||al<=0||k<=0||acd<=0){alert('AL, K (or TK), ACD 값을 모두 확인해주세요.');return}document.getElementById('formula').textContent=recommend(al,k,acd);document.getElementById('rAl').textContent=fmt(al)+' mm';document.getElementById('rK').textContent=fmt(k)+' D';document.getElementById('rAcd').textContent=fmt(acd)+' mm';const tag=document.getElementById('eyeTag');tag.style.display=eye?'block':'none';tag.textContent=eye;const res=document.getElementById('result');res.classList.add('show');document.body.classList.add('result-visible')}
+function showRecommendation(){const al=parseFloat(document.getElementById('al').value),k=parseFloat(document.getElementById('k').value),acd=parseFloat(document.getElementById('acd').value);if(!Number.isFinite(al)||!Number.isFinite(k)||!Number.isFinite(acd)||al<=0||k<=0||acd<=0){alert('AL, K (or TK), ACD 값을 모두 확인해주세요.');return}document.getElementById('formula').textContent=recommend(al,k,acd);document.getElementById('rAl').textContent=fmt(al)+' mm';document.getElementById('rK').textContent=fmt(k)+' D';document.getElementById('rAcd').textContent=fmt(acd)+' mm';const res=document.getElementById('result');res.classList.add('show');document.body.classList.add('result-visible')}
 document.getElementById('recommendBtn').addEventListener('click',showRecommendation);['al','k','acd'].forEach(id=>document.getElementById(id).addEventListener('keydown',e=>{if(e.key==='Enter')showRecommendation()}));
 
 let ocr={al:null,acd:null,k:null,tk:null,k1:null,k2:null,tk1:null,tk2:null,se:null,tse:null,selectedK:null,selectedSource:null};
@@ -137,14 +137,14 @@ document.getElementById('applyOcrBtn').addEventListener('click',()=>{if(ocr.k!=n
 if('serviceWorker' in navigator){
  window.addEventListener('load',async()=>{
   try{
-   const reg=await navigator.serviceWorker.register('./sw.js?v=8',{updateViaCache:'none'});
+   const reg=await navigator.serviceWorker.register('./sw.js?v=9',{updateViaCache:'none'});
    await reg.update();
    let refreshing=false;
    navigator.serviceWorker.addEventListener('controllerchange',()=>{
     if(refreshing)return;
     refreshing=true;
-    if(!sessionStorage.getItem('iol-v8-reloaded')){
-     sessionStorage.setItem('iol-v8-reloaded','1');
+    if(!sessionStorage.getItem('iol-v9-reloaded')){
+     sessionStorage.setItem('iol-v9-reloaded','1');
      location.reload();
     }
    });
