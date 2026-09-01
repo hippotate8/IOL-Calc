@@ -3,9 +3,13 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<link rel="apple-touch-icon" sizes="192x192" href="icon-192.png">
+<link rel="apple-touch-icon-precomposed" href="icon-192.png">
+<link rel="manifest" href="manifest.webmanifest">
 <meta name="theme-color" content="#008991">
 <title>IOL Formula Selector</title>
-<meta name="app-version" content="16.0">
+<meta name="app-version" content="17.0">
 <style>
 :root{--teal:#008991;--teal2:#00747b;--mint:#edfafa;--line:#dce8e8;--text:#172227;--muted:#68777d}
 *{box-sizing:border-box} body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Noto Sans KR",Arial,sans-serif;color:var(--text);background:#f7f9f9}.app{max-width:1120px;margin:0 auto;min-height:100vh;background:#fff}
@@ -75,6 +79,18 @@ body.crop-locked .crop-panel.show .crop-actions{
   .camera-button strong{font-size:14px}
 }
 
+
+#kChoiceBox>div:first-child{font-size:15px!important;line-height:1.45}
+.choices{gap:10px}
+.choice{font-size:19px!important;font-weight:800!important;padding:12px 18px!important;min-width:118px;min-height:48px}
+.choice.active{font-weight:900!important}
+
+#captureModeLabel{word-break:keep-all!important;overflow-wrap:normal!important}
+#captureModeLabel .label-word{white-space:nowrap!important;display:inline-block}
+@media(max-width:760px){
+ #captureModeLabel{display:flex;flex-wrap:wrap;justify-content:center;align-items:center;column-gap:.28em;row-gap:0;line-height:1.15}
+}
+
 </style>
 </head>
 <body>
@@ -93,7 +109,7 @@ body.crop-locked .crop-panel.show .crop-actions{
     </section>
     <section class="card camera-card"><h2>Photo Recognition</h2><p class="sub">Biometry 화면 또는 출력물을 촬영하세요.</p>
       <div class="camera-actions-top">
-        <button class="camera-zone camera-button" id="openCameraBtn" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M4 7h3l1.4-2h7.2L17 7h3a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2Z"/><circle cx="12" cy="13" r="4"/></svg><strong id="captureModeLabel">사진 찍기</strong></button>
+        <button class="camera-zone camera-button" id="openCameraBtn" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M4 7h3l1.4-2h7.2L17 7h3a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2Z"/><circle cx="12" cy="13" r="4"/></svg><strong id="captureModeLabel"><span class="label-word">사진</span><span class="label-word">찍기</span></strong></button>
         <label class="camera-zone file-button" for="photoInput"><strong>사진 불러오기</strong></label>
       </div>
       <input id="photoInput" type="file" accept="image/*"><div class="ocr-status" id="ocrStatus"></div>
@@ -295,10 +311,10 @@ document.addEventListener('wheel',e=>{
 },{passive:false,capture:true});
 
 document.getElementById('resetCropBtn').addEventListener('click',resetCrop);
-function croppedProcessedCanvas(){
+function croppedProcessedCanvas(rect=cropRect){
  const img=cropImage;
- const sx=Math.round(img.naturalWidth*cropRect.x),sy=Math.round(img.naturalHeight*cropRect.y);
- const sw=Math.max(1,Math.round(img.naturalWidth*cropRect.w)),sh=Math.max(1,Math.round(img.naturalHeight*cropRect.h));
+ const sx=Math.round(img.naturalWidth*rect.x),sy=Math.round(img.naturalHeight*rect.y);
+ const sw=Math.max(1,Math.round(img.naturalWidth*rect.w)),sh=Math.max(1,Math.round(img.naturalHeight*rect.h));
  let scale=Math.max(1,Math.min(5,1700/sw));
  if(sw<700)scale=Math.min(6,scale*1.25);
  const c=document.createElement('canvas');
@@ -327,12 +343,36 @@ function croppedProcessedCanvas(){
  x.putImageData(d,0,0);
  return c;
 }
-async function runCropOcr(){if(!cropImage)return;unlockCropScreen();const status=document.getElementById('ocrStatus');const ok=await loadTesseract();if(!ok){status.textContent='자동 인식 엔진을 불러오지 못했습니다. 직접 입력은 정상 사용 가능합니다.';return}try{const canvas=croppedProcessedCanvas();const result=await Tesseract.recognize(canvas,'eng',{
- logger:m=>{if(m.status==='recognizing text')status.textContent=`선택 영역 인식 중… ${Math.round((m.progress||0)*100)}%`},
- tessedit_pageseg_mode:11,
- preserve_interword_spaces:'1',
- user_defined_dpi:'300'
-});ocr=parseBiometry(result.data.text||'');status.textContent='인식 완료 — 아래 값을 확인해주세요.';renderOcr();showOcrReviewCentered()}catch(err){console.error(err);status.textContent='자동 인식에 실패했습니다. 영역을 다시 선택하거나 직접 입력해주세요.'}}
+async function runCropOcr(){
+ if(!cropImage)return;
+ const frozenRect={...cropRect};
+ const status=document.getElementById('ocrStatus');
+ const ok=await loadTesseract();
+ if(!ok){
+   unlockCropScreen();
+   status.textContent='자동 인식 엔진을 불러오지 못했습니다. 직접 입력은 정상 사용 가능합니다.';
+   return;
+ }
+ try{
+   const canvas=croppedProcessedCanvas(frozenRect);
+   const result=await Tesseract.recognize(canvas,'eng',{
+     logger:m=>{if(m.status==='recognizing text')status.textContent=`선택 영역 인식 중… ${Math.round((m.progress||0)*100)}%`},
+     tessedit_pageseg_mode:11,
+     preserve_interword_spaces:'1',
+     user_defined_dpi:'300'
+   });
+   ocr=parseBiometry(result.data.text||'');
+   status.textContent='인식 완료 — 아래 값을 확인해주세요.';
+   renderOcr();
+   unlockCropScreen();
+   requestAnimationFrame(()=>{placeCropBox();showOcrReviewCentered()});
+ }catch(err){
+   console.error(err);
+   unlockCropScreen();
+   requestAnimationFrame(placeCropBox);
+   status.textContent='자동 인식에 실패했습니다. 영역을 다시 선택하거나 직접 입력해주세요.';
+ }
+}
 document.getElementById('recognizeCropBtn').addEventListener('click',runCropOcr);
 
 let cropScrollY=0;
@@ -368,8 +408,42 @@ function updateCaptureModeUI(){
  captureMode=isDesktopCaptureMode()?'screen':'camera';
  const label=document.getElementById('captureModeLabel');
  const captureBtn=document.getElementById('captureCameraBtn');
- if(label)label.textContent=captureMode==='screen'?'스크린 캡쳐':'사진 찍기';
+ if(label){
+   label.innerHTML=captureMode==='screen'
+     ?'<span class="label-word">스크린</span><span class="label-word">캡쳐</span>'
+     :'<span class="label-word">사진</span><span class="label-word">찍기</span>';
+ }
  if(captureBtn)captureBtn.textContent=captureMode==='screen'?'캡쳐':'촬영';
+}
+
+
+async function streamToCropImage(stream){
+ const tempVideo=document.createElement('video');
+ tempVideo.playsInline=true;tempVideo.muted=true;tempVideo.srcObject=stream;
+ await tempVideo.play();
+ if(!tempVideo.videoWidth||!tempVideo.videoHeight){
+   await new Promise(resolve=>{
+     const done=()=>{tempVideo.removeEventListener('loadedmetadata',done);resolve()};
+     tempVideo.addEventListener('loadedmetadata',done,{once:true});
+     setTimeout(resolve,700);
+   });
+ }
+ await new Promise(r=>setTimeout(r,120));
+ const c=document.createElement('canvas');
+ c.width=tempVideo.videoWidth||1920;c.height=tempVideo.videoHeight||1080;
+ c.getContext('2d').drawImage(tempVideo,0,0,c.width,c.height);
+ const img=new Image();
+ const data=c.toDataURL('image/png');
+ await new Promise((resolve,reject)=>{img.onload=resolve;img.onerror=reject;img.src=data});
+ stream.getTracks().forEach(t=>t.stop());
+ tempVideo.srcObject=null;
+ cropImage=img;
+ resetCrop();
+ drawCropPreview();
+ document.getElementById('cropPanel').classList.add('show');
+ document.getElementById('ocrReview').classList.remove('show');
+ document.getElementById('ocrStatus').textContent='인식할 영역을 조절한 뒤 “선택 영역 인식”을 누르세요.';
+ lockCropScreen();
 }
 
 async function openLiveCamera(){
@@ -384,15 +458,13 @@ async function openLiveCamera(){
      return;
    }
    try{
-     cameraStream=await navigator.mediaDevices.getDisplayMedia({
+     status.textContent='캡쳐할 화면을 선택해주세요.';
+     const stream=await navigator.mediaDevices.getDisplayMedia({
        video:{cursor:'always'},
        audio:false
      });
-     video.srcObject=cameraStream;
-     modal.classList.add('show');
-     modal.setAttribute('aria-hidden','false');
-     const track=cameraStream.getVideoTracks()[0];
-     if(track)track.addEventListener('ended',closeLiveCamera,{once:true});
+     status.textContent='화면 캡쳐 중…';
+     await streamToCropImage(stream);
    }catch(err){
      console.error(err);
      status.textContent='스크린 캡쳐가 취소되었거나 화면 공유 권한을 사용할 수 없습니다.';
