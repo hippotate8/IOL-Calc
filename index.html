@@ -9,7 +9,7 @@
 <link rel="manifest" href="manifest.webmanifest">
 <meta name="theme-color" content="#008991">
 <title>IOL Formula Selector</title>
-<meta name="app-version" content="17.0">
+<meta name="app-version" content="18.0">
 <style>
 :root{--teal:#008991;--teal2:#00747b;--mint:#edfafa;--line:#dce8e8;--text:#172227;--muted:#68777d}
 *{box-sizing:border-box} body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Noto Sans KR",Arial,sans-serif;color:var(--text);background:#f7f9f9}.app{max-width:1120px;margin:0 auto;min-height:100vh;background:#fff}
@@ -89,6 +89,20 @@ body.crop-locked .crop-panel.show .crop-actions{
 #captureModeLabel .label-word{white-space:nowrap!important;display:inline-block}
 @media(max-width:760px){
  #captureModeLabel{display:flex;flex-wrap:wrap;justify-content:center;align-items:center;column-gap:.28em;row-gap:0;line-height:1.15}
+}
+
+
+@media(min-width:761px){
+ body.crop-locked .crop-panel.show .crop-stage{
+   width:min(92vw,1400px);
+ }
+ body.crop-locked .crop-panel.show .crop-stage canvas{
+   display:block;
+   width:auto;
+   height:auto;
+   max-width:100%;
+   max-height:68vh;
+ }
 }
 
 </style>
@@ -294,6 +308,22 @@ function drawCropPreview(){if(!cropImage)return;const c=document.getElementById(
 function placeCropBox(){const b=document.getElementById('cropBox'),c=document.getElementById('cropCanvas');b.style.left=(c.offsetLeft+cropRect.x*c.clientWidth)+'px';b.style.top=(c.offsetTop+cropRect.y*c.clientHeight)+'px';b.style.width=(cropRect.w*c.clientWidth)+'px';b.style.height=(cropRect.h*c.clientHeight)+'px'}
 function resetCrop(){cropRect={x:.04,y:.05,w:.92,h:.90};placeCropBox()}
 function ptr(e){const r=document.getElementById('cropCanvas').getBoundingClientRect();return{x:Math.max(0,Math.min(1,(e.clientX-r.left)/r.width)),y:Math.max(0,Math.min(1,(e.clientY-r.top)/r.height))}}
+function getVisualCropRect(){
+ const c=document.getElementById('cropCanvas');
+ const b=document.getElementById('cropBox');
+ const cr=c.getBoundingClientRect(),br=b.getBoundingClientRect();
+ if(!cr.width||!cr.height)return {...cropRect};
+ const x=Math.max(0,Math.min(1,(br.left-cr.left)/cr.width));
+ const y=Math.max(0,Math.min(1,(br.top-cr.top)/cr.height));
+ const right=Math.max(0,Math.min(1,(br.right-cr.left)/cr.width));
+ const bottom=Math.max(0,Math.min(1,(br.bottom-cr.top)/cr.height));
+ return {
+   x,
+   y,
+   w:Math.max(.01,right-x),
+   h:Math.max(.01,bottom-y)
+ };
+}
 const stage=document.getElementById('cropStage'),box=document.getElementById('cropBox');
 box.addEventListener('pointerdown',e=>{if(!cropImage)return;e.preventDefault();e.stopPropagation();const p=ptr(e),h=e.target.dataset.handle||null;cropDrag={p,start:{...cropRect},handle:h};box.setPointerCapture(e.pointerId);e.preventDefault();e.stopPropagation()});
 box.addEventListener('pointermove',e=>{if(!cropDrag)return;e.preventDefault();e.stopPropagation();const p=ptr(e),dx=p.x-cropDrag.p.x,dy=p.y-cropDrag.p.y,min=.08;let r={...cropDrag.start};if(cropDrag.handle){if(cropDrag.handle.includes('w')){r.x=Math.max(0,Math.min(r.x+dx,r.x+r.w-min));r.w=cropDrag.start.w-(r.x-cropDrag.start.x)}if(cropDrag.handle.includes('e'))r.w=Math.max(min,Math.min(1-r.x,cropDrag.start.w+dx));if(cropDrag.handle.includes('n')){r.y=Math.max(0,Math.min(r.y+dy,r.y+r.h-min));r.h=cropDrag.start.h-(r.y-cropDrag.start.y)}if(cropDrag.handle.includes('s'))r.h=Math.max(min,Math.min(1-r.y,cropDrag.start.h+dy))}else{r.x=Math.max(0,Math.min(1-r.w,cropDrag.start.x+dx));r.y=Math.max(0,Math.min(1-r.h,cropDrag.start.y+dy))}cropRect=r;placeCropBox();e.preventDefault();e.stopPropagation()});
@@ -345,17 +375,28 @@ function croppedProcessedCanvas(rect=cropRect){
 }
 async function runCropOcr(){
  if(!cropImage)return;
- const frozenRect={...cropRect};
+
+ // Freeze exactly what the user sees BEFORE any async work or layout change.
+ const visualRect=getVisualCropRect();
+ cropRect={...visualRect};
+ const frozenCanvas=croppedProcessedCanvas(visualRect);
+
  const status=document.getElementById('ocrStatus');
+
+ // Leave crop mode only after the selected pixels have already been frozen.
+ document.getElementById('cropPanel').classList.remove('show');
+ unlockCropScreen();
+
  const ok=await loadTesseract();
  if(!ok){
-   unlockCropScreen();
-   status.textContent='자동 인식 엔진을 불러오지 못했습니다. 직접 입력은 정상 사용 가능합니다.';
+   status.textContent='자동 인식 엔진을 불러오지 못했습니다. “다시 Crop”으로 같은 사진을 다시 선택할 수 있습니다.';
+   renderOcr();
+   showOcrReviewCentered();
    return;
  }
+
  try{
-   const canvas=croppedProcessedCanvas(frozenRect);
-   const result=await Tesseract.recognize(canvas,'eng',{
+   const result=await Tesseract.recognize(frozenCanvas,'eng',{
      logger:m=>{if(m.status==='recognizing text')status.textContent=`선택 영역 인식 중… ${Math.round((m.progress||0)*100)}%`},
      tessedit_pageseg_mode:11,
      preserve_interword_spaces:'1',
@@ -364,13 +405,12 @@ async function runCropOcr(){
    ocr=parseBiometry(result.data.text||'');
    status.textContent='인식 완료 — 아래 값을 확인해주세요.';
    renderOcr();
-   unlockCropScreen();
-   requestAnimationFrame(()=>{placeCropBox();showOcrReviewCentered()});
+   showOcrReviewCentered();
  }catch(err){
    console.error(err);
-   unlockCropScreen();
-   requestAnimationFrame(placeCropBox);
-   status.textContent='자동 인식에 실패했습니다. 영역을 다시 선택하거나 직접 입력해주세요.';
+   status.textContent='자동 인식에 실패했습니다. “다시 Crop”으로 같은 사진에서 영역을 다시 선택해주세요.';
+   renderOcr();
+   showOcrReviewCentered();
  }
 }
 document.getElementById('recognizeCropBtn').addEventListener('click',runCropOcr);
@@ -536,7 +576,10 @@ document.getElementById('retryCropBtn').addEventListener('click',()=>{
  if(!cropImage)return;
  document.getElementById('cropPanel').classList.add('show');
  lockCropScreen();
- requestAnimationFrame(()=>{drawCropPreview();placeCropBox()});
+ requestAnimationFrame(()=>{
+   drawCropPreview();
+   requestAnimationFrame(placeCropBox);
+ });
 });
 
 document.getElementById('applyOcrBtn').addEventListener('click',()=>{if(ocr.k!=null&&ocr.tk!=null&&ocr.selectedK==null){alert('K 또는 TK를 선택해주세요.');return}if(ocr.al!=null)document.getElementById('al').value=ocr.al.toFixed(2);const kval=ocr.selectedK!=null?ocr.selectedK:(ocr.tk!=null&&ocr.k==null?ocr.tk:ocr.k);if(kval!=null){document.getElementById('k').value=kval.toFixed(2);lastKSource=ocr.selectedSource||(ocr.tk!=null&&ocr.k==null?'TK':'K')}if(ocr.acd!=null)document.getElementById('acd').value=ocr.acd.toFixed(2);window.scrollTo({top:0,behavior:'smooth'})});
