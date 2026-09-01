@@ -1,4 +1,4 @@
-const CACHE='iol-formula-v9';
+const CACHE='iol-formula-v10';
 const STATIC=['./manifest.webmanifest','./eom_logo.png','./yes_logo.png','./icon-192.png','./icon-512.png'];
 
 self.addEventListener('install',event=>{
