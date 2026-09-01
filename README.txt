@@ -1,10 +1,9 @@
-IOL Formula Selector v14
+IOL Formula Selector v15
 
-수정:
-- '선택 영역 인식' 완료 후 crop/photo panel을 숨김.
-- OCR 결과 확인(인식결과 확인) 패널을 화면 중앙으로 자동 스크롤.
-- AL / K / ACD 라벨 OCR 오류에 대한 보정 규칙 강화:
-  A1/AI/A L -> AL, ACO/AC0/A C D -> ACD, K I/K l -> K1, K Z -> K2,
-  SE/TSE/K/TK 주변 숫자에 대한 loose fallback 추가.
-- 두 번째 OCR pass는 추가하지 않음: v5 기반의 빠른 1회 OCR 유지.
+- OCR 후 사진/crop을 숨기지 않음.
+- 인식결과 확인 화면은 자동으로 화면 중앙에 위치.
+- '다시 Crop' 버튼으로 같은 사진에서 즉시 crop 재시도.
+- v5 계열 1-pass OCR 유지하면서 전처리/PSM/label normalization/fallback 강화.
+- 데스크탑 '사진 찍기'는 getUserMedia 웹캠/카메라 미리보기 -> 촬영 방식.
+- '사진 불러오기'는 별도 버튼.
 - iPhone/Safari crop scroll lock 유지.

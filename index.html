@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#008991">
 <title>IOL Formula Selector</title>
-<meta name="app-version" content="14.0">
+<meta name="app-version" content="15.0">
 <style>
 :root{--teal:#008991;--teal2:#00747b;--mint:#edfafa;--line:#dce8e8;--text:#172227;--muted:#68777d}
 *{box-sizing:border-box} body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Noto Sans KR",Arial,sans-serif;color:var(--text);background:#f7f9f9}.app{max-width:1120px;margin:0 auto;min-height:100vh;background:#fff}
@@ -57,6 +57,18 @@ body.crop-locked .crop-panel.show .crop-actions{
  #ocrReview.show{box-shadow:0 8px 28px rgba(24,102,105,.18)}
 }
 
+
+.camera-actions-top{display:grid;grid-template-columns:1.2fr .8fr;gap:10px}
+.camera-button{appearance:none;width:100%;font:inherit}
+.file-button{min-height:100%;display:flex;align-items:center;justify-content:center;padding:16px}
+.ocr-review-actions{display:grid;grid-template-columns:1fr 1.4fr;gap:10px;margin-top:12px}
+.camera-modal{display:none;position:fixed;inset:0;z-index:4000;background:rgba(0,0,0,.88);align-items:center;justify-content:center;padding:18px}
+.camera-modal.show{display:flex}
+.camera-dialog{width:min(96vw,1000px);max-height:94vh;display:flex;flex-direction:column;gap:12px}
+.camera-dialog video{width:100%;max-height:78vh;object-fit:contain;background:#000;border-radius:14px}
+.camera-modal-actions{display:grid;grid-template-columns:1fr 1.5fr;gap:10px}
+@media(max-width:760px){.camera-actions-top{grid-template-columns:1fr 1fr}.file-button{padding:12px}}
+
 </style>
 </head>
 <body>
@@ -74,10 +86,13 @@ body.crop-locked .crop-panel.show .crop-actions{
       <button class="btn primary" id="recommendBtn">Recommend Formula</button>
     </section>
     <section class="card camera-card"><h2>Photo Recognition</h2><p class="sub">Biometry 화면 또는 출력물을 촬영하세요.</p>
-      <label class="camera-zone" for="photoInput"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M4 7h3l1.4-2h7.2L17 7h3a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2Z"/><circle cx="12" cy="13" r="4"/></svg><strong>사진 찍기 / 불러오기</strong></label>
-      <input id="photoInput" type="file" accept="image/*" capture="environment"><div class="ocr-status" id="ocrStatus"></div>
+      <div class="camera-actions-top">
+        <button class="camera-zone camera-button" id="openCameraBtn" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M4 7h3l1.4-2h7.2L17 7h3a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2Z"/><circle cx="12" cy="13" r="4"/></svg><strong>사진 찍기</strong></button>
+        <label class="camera-zone file-button" for="photoInput"><strong>사진 불러오기</strong></label>
+      </div>
+      <input id="photoInput" type="file" accept="image/*"><div class="ocr-status" id="ocrStatus"></div>
       <div class="crop-panel" id="cropPanel"><div class="crop-title"><b>인식할 영역 선택</b><span>숫자와 항목명이 있는 부분만 선택하세요.</span></div><div class="crop-stage" id="cropStage"><canvas id="cropCanvas"></canvas><div class="crop-box" id="cropBox"><span class="crop-handle nw" data-handle="nw"></span><span class="crop-handle ne" data-handle="ne"></span><span class="crop-handle sw" data-handle="sw"></span><span class="crop-handle se" data-handle="se"></span></div></div><div class="crop-actions"><button class="btn secondary" id="resetCropBtn" type="button">전체 영역</button><button class="btn primary" id="recognizeCropBtn" type="button">선택 영역 인식</button></div></div>
-      <div class="ocr-review" id="ocrReview"><div class="ocr-review-head"><h3>인식 결과 확인</h3><span class="ocr-hint">인식 오류가 있으면 적용 후 직접 수정하세요.</span></div><div id="ocrSummary"></div><div id="kChoiceBox" style="display:none"><div style="font-size:13px;color:#667;margin-top:8px">K와 TK가 모두 인식되었습니다. 사용할 값을 선택하세요.</div><div class="choices" id="kChoices"></div></div><button class="btn primary" id="applyOcrBtn" type="button">입력창에 적용</button></div>
+      <div class="ocr-review" id="ocrReview"><div class="ocr-review-head"><h3>인식 결과 확인</h3><span class="ocr-hint">인식 오류가 있으면 적용 후 직접 수정하세요.</span></div><div id="ocrSummary"></div><div id="kChoiceBox" style="display:none"><div style="font-size:13px;color:#667;margin-top:8px">K와 TK가 모두 인식되었습니다. 사용할 값을 선택하세요.</div><div class="choices" id="kChoices"></div></div><div class="ocr-review-actions"><button class="btn secondary" id="retryCropBtn" type="button">다시 Crop</button><button class="btn primary" id="applyOcrBtn" type="button">입력창에 적용</button></div></div>
     </section>
   </div>
   <section class="result" id="result">
@@ -85,6 +100,16 @@ body.crop-locked .crop-panel.show .crop-actions{
 <div class="result-head"><div class="recommended"><small>Recommended Formula</small><div class="formula" id="formula">—</div></div><div class="eye-tag" id="eyeTag" style="display:none"></div></div>
 <div class="result-body"><div class="values-line"><div><span>AL</span><b id="rAl"></b></div><div><span>K/TK</span><b id="rK"></b></div><div><span>ACD</span><b id="rAcd"></b></div></div></div>
 </section>
+
+<div class="camera-modal" id="cameraModal" aria-hidden="true">
+  <div class="camera-dialog">
+    <video id="cameraVideo" playsinline autoplay muted></video>
+    <div class="camera-modal-actions">
+      <button class="btn secondary" id="closeCameraBtn" type="button">취소</button>
+      <button class="btn primary" id="captureCameraBtn" type="button">촬영</button>
+    </div>
+  </div>
+</div>
 </main><div class="footer">© Hanguk EOM Inc. &amp; YES Eye Clinic.</div></div>
 <script>
 const FORMULA_TABLE=[[["Kane","EVO","EVO","Barrett"],["Kane","EVO","Barrett","Kane"],["EVO","EVO","Kane","Kane"],["EVO","EVO","Pearl-DGS","Kane"],["Hoffer QST","Barrett","Kane","Kane"],["K6","Hoffer QST","Kane","Kane"],["EVO","Hoffer QST","Kane","Kane"],["K6","EVO","Kane","Kane"]],[["K6","Kane","Kane","Barrett"],["K6","EVO","Barrett","Pearl-DGS"],["Hoffer QST","EVO","Pearl-DGS","Kane"],["K6","Barrett","Kane","Kane"],["K6","Hoffer QST","Kane","Kane"],["EVO","Hoffer QST","Kane","Kane"],["K6","EVO","Kane","Kane"],["Barrett","Pearl-DGS","Kane","Kane"]],[["Kane","EVO","Kane","EVO"],["Hoffer QST","EVO","Kane","Kane"],["K6","Kane","Kane","Kane"],["K6","Hoffer QST","Kane","Kane"],["EVO","Hoffer QST","Kane","Pearl-DGS"],["K6","Pearl-DGS","Kane","Pearl-DGS"],["K6","K6","Kane","Pearl-DGS"],["Barrett","Pearl-DGS","Hoffer QST","Pearl-DGS"]],[["Kane","Kane","EVO","EVO"],["K6","Kane","Kane","Kane"],["K6","EVO","Kane","Kane"],["K6","Hoffer QST","Kane","Pearl-DGS"],["Kane","EVO","Pearl-DGS","Pearl-DGS"],["K6","Hoffer QST","Kane","Pearl-DGS"],["Kane","Kane","Hoffer QST","Pearl-DGS"],["EVO","K6","Hoffer QST","Hoffer QST"]],[["K6","Kane","Kane","EVO"],["K6","Hoffer QST","Kane","Kane"],["Kane","EVO","Kane","Pearl-DGS"],["EVO","EVO","Kane","Pearl-DGS"],["Hoffer QST","Kane","Hoffer QST","Pearl-DGS"],["Pearl-DGS","Kane","Hoffer QST","EVO"],["Hoffer QST","Hoffer QST","Hoffer QST","Hoffer QST"],["Barrett","Kane","Kane","Hoffer QST"]],[["Kane","EVO","EVO","EVO"],["Kane","EVO","Kane","Pearl-DGS"],["Barrett","Hoffer QST","Kane","EVO"],["Kane","K6","Pearl-DGS","EVO"],["Hoffer QST","Kane","Hoffer QST","Barrett"],["K6","Hoffer QST","K6","Barrett"],["Kane","Hill-RBF","Barrett","Barrett"],["K6","Hoffer QST","Hoffer QST","Barrett"]],[["Kane","Kane","EVO","EVO"],["Kane","Hoffer QST","EVO","Pearl-DGS"],["Hoffer QST","Barrett","Pearl-DGS","Pearl-DGS"],["Kane","Kane","Hill-RBF","Pearl-DGS"],["Hoffer QST","Pearl-DGS","K6","Hill-RBF"],["Kane","K6","Hoffer QST","Hill-RBF"],["K6","Pearl-DGS","Hill-RBF","Barrett"],["K6","K6","Hill-RBF","Barrett"]],[["Kane","Kane","EVO","Pearl-DGS"],["Kane","EVO","Kane","Pearl-DGS"],["Barrett","K6","Hoffer QST","Pearl-DGS"],["EVO","K6","Hoffer QST","Pearl-DGS"],["Hoffer QST","Pearl-DGS","Kane","Hill-RBF"],["Kane","Barrett","EVO","Hill-RBF"],["Barrett","Barrett","EVO","Barrett"],["Barrett","Barrett","EVO","Barrett"]],[["Hoffer QST","EVO","EVO","Pearl-DGS"],["Hoffer QST","Pearl-DGS","K6","EVO"],["Hoffer QST","K6","K6","EVO"],["Barrett","Hill-RBF","K6","K6"],["Barrett","Pearl-DGS","Kane","Barrett"],["Barrett","Barrett","K6","Barrett"],["Barrett","Barrett","EVO","K6"],["Barrett","Hoffer QST","EVO","EVO"]],[["Hoffer QST","Kane","EVO","Pearl-DGS"],["Pearl-DGS","Hill-RBF","Barrett","Pearl-DGS"],["Hill-RBF","Pearl-DGS","Hill-RBF","K6"],["Barrett","K6","Kane","EVO"],["Barrett","Barrett","K6","Barrett"],["Barrett","K6","K6","Hill-RBF"],["Barrett","K6","EVO","Hill-RBF"],["Hoffer QST","Barrett","EVO","EVO"]],[["Barrett","K6","EVO","Pearl-DGS"],["Pearl-DGS","K6","Barrett","Hoffer QST"],["K6","Hoffer QST","Barrett","Kane"],["Kane","Barrett","Hoffer QST","Hoffer QST"],["Kane","EVO","Hoffer QST","K6"],["Pearl-DGS","Hoffer QST","Hill-RBF","Hoffer QST"],["Kane","EVO","Pearl-DGS","EVO"],["Barrett","EVO","Kane","EVO"]],[["Pearl-DGS","EVO","Pearl-DGS","Hoffer QST"],["EVO","Barrett","EVO","Hoffer QST"],["Hoffer QST","Barrett","EVO","K6"],["Hoffer QST","Barrett","EVO","Hoffer QST"],["Kane","EVO","Hoffer QST","EVO"],["Kane","Barrett","Kane","EVO"],["Barrett","EVO","Kane","EVO"],["Kane","EVO","EVO","Pearl-DGS"]],[["EVO","Hill-RBF","Hill-RBF","EVO"],["EVO","EVO","EVO","EVO"],["Kane","EVO","EVO","EVO"],["Hoffer QST","EVO","Barrett","Hill-RBF"],["Kane","EVO","Barrett","EVO"],["Kane","EVO","Barrett","EVO"],["Barrett","EVO","EVO","Pearl-DGS"],["Barrett","EVO","EVO","Pearl-DGS"]],[["Hoffer QST","EVO","Hill-RBF","Pearl-DGS"],["Pearl-DGS","EVO","EVO","Hoffer QST"],["Hoffer QST","Hoffer QST","EVO","EVO"],["Barrett","Barrett","K6","EVO"],["Barrett","Barrett","Kane","EVO"],["Kane","EVO","EVO","Pearl-DGS"],["Kane","EVO","EVO","Pearl-DGS"],["Kane","EVO","EVO","Pearl-DGS"]],[["Pearl-DGS","Pearl-DGS","Pearl-DGS","EVO"],["Hoffer QST","Hoffer QST","EVO","Pearl-DGS"],["Pearl-DGS","Hoffer QST","Hoffer QST","EVO"],["Barrett","Barrett","EVO","EVO"],["Pearl-DGS","EVO","EVO","Pearl-DGS"],["Pearl-DGS","EVO","EVO","Pearl-DGS"],["EVO","EVO","EVO","Pearl-DGS"],["Kane","EVO","Pearl-DGS","Kane"]],[["Barrett","Barrett","EVO","Pearl-DGS"],["Barrett","Barrett","EVO","EVO"],["Pearl-DGS","EVO","Barrett","K6"],["Barrett","EVO","Kane","K6"],["EVO","EVO","EVO","K6"],["EVO","EVO","EVO","Pearl-DGS"],["Pearl-DGS","Kane","Kane","Pearl-DGS"],["Kane","Kane","EVO","Kane"]],[["Pearl-DGS","Pearl-DGS","EVO","EVO"],["Kane","Pearl-DGS","EVO","K6"],["Barrett","Hoffer QST","Kane","EVO"],["Pearl-DGS","Barrett","EVO","K6"],["EVO","EVO","Pearl-DGS","EVO"],["Hoffer QST","EVO","EVO","K6"],["Pearl-DGS","Kane","Kane","Pearl-DGS"],["Pearl-DGS","Hoffer QST","Hoffer QST","K6"]],[["Kane","Pearl-DGS","Pearl-DGS","Pearl-DGS"],["Kane","Kane","Barrett","Hoffer QST"],["Barrett","Barrett","EVO","Pearl-DGS"],["Barrett","Hoffer QST","Pearl-DGS","Pearl-DGS"],["Hoffer QST","EVO","EVO","EVO"],["EVO","Pearl-DGS","Pearl-DGS","Pearl-DGS"],["Pearl-DGS","Pearl-DGS","Pearl-DGS","Pearl-DGS"],["Pearl-DGS","Pearl-DGS","EVO","Pearl-DGS"]],[["Kane","Pearl-DGS","EVO","Barrett"],["Pearl-DGS","Kane","EVO","EVO"],["Hoffer QST","Barrett","Hoffer QST","Hoffer QST"],["EVO","EVO","Hoffer QST","Hoffer QST"],["Pearl-DGS","EVO","Pearl-DGS","EVO"],["Pearl-DGS","EVO","Pearl-DGS","K6"],["EVO","K6","K6","K6"],["Pearl-DGS","Kane","Kane","Kane"]],[["Kane","Kane","Pearl-DGS","Barrett"],["Barrett","EVO","Kane","Barrett"],["Barrett","Barrett","EVO","Hoffer QST"],["Pearl-DGS","EVO","EVO","EVO"],["EVO","EVO","K6","K6"],["EVO","K6","K6","K6"],["EVO","Barrett","Kane","Barrett"],["K6","K6","K6","K6"]]];
@@ -101,12 +126,12 @@ let cropRect={x:.06,y:.08,w:.88,h:.84};
 let cropDrag=null;
 const PHYS={al:[15,40],acd:[1,8],k:[30,60]};
 function plausible(v,[lo,hi]){return Number.isFinite(v)&&v>=lo&&v<=hi?v:null}
-function cleanText(t){return String(t||'').replace(/,/g,'.').replace(/\r/g,'').replace(/[|]/g,'I')}
+function cleanText(t){return String(t||'').replace(/,/g,'.').replace(/(\d)[:;](\d)/g,'$1.$2').replace(/\r/g,'').replace(/[|]/g,'I')}
 function normalizeOcrLabels(t){
  return cleanText(t)
-  .replace(/\bA\s*[1I]\b/gi,'AL')
+  .replace(/\bA\s*[1Il|]\b/gi,'AL').replace(/\bA[L1I|][^A-Z0-9]{0,2}(?=\d)/gi,'AL ')
   .replace(/\bA\s+L\b/gi,'AL')
-  .replace(/\bA[C6G]\s*[D0O]\b/gi,'ACD')
+  .replace(/\bA[C6GQ]\s*[D0O]\b/gi,'ACD').replace(/\bA.?C.?[D0O]\b/gi,'ACD')
   .replace(/\bA\s*C\s*D\b/gi,'ACD')
   .replace(/\bK\s*[Il|]\b/gi,'K1')
   .replace(/\bK\s*[Zz]\b/gi,'K2')
@@ -200,6 +225,22 @@ function parseBiometry(text){
  }
 
  k=plausible(k,PHYS.k);tk=plausible(tk,PHYS.k);acd=plausible(acd,PHYS.acd);al=plausible(al,PHYS.al);
+ 
+ // Layout fallback when labels are badly OCR'd: only fill a missing field when candidate is unique.
+ const allNums=(t.match(/\d{1,2}(?:\.\d{1,3})?/g)||[]).map(Number);
+ if(al==null){
+   const cand=[...new Set(allNums.filter(v=>v>=18&&v<=35))];
+   if(cand.length===1)al=cand[0];
+ }
+ if(acd==null){
+   const cand=[...new Set(allNums.filter(v=>v>=1.5&&v<=5.5))];
+   if(cand.length===1)acd=cand[0];
+ }
+ if(k==null){
+   const cand=[...new Set(allNums.filter(v=>v>=35&&v<=55))];
+   if(cand.length===1)k=cand[0];
+ }
+
  const both=k!=null&&tk!=null;
  return{al,acd,k,tk,k1,k2,tk1,tk2,se,tse,selectedK:both?null:(tk!=null?tk:k),selectedSource:both?null:(tk!=null?'TK':'K')};
 }
@@ -215,18 +256,14 @@ function renderOcr(){
 }
 
 function showOcrReviewCentered(){
- const panel=document.getElementById('cropPanel');
- if(panel)panel.classList.remove('show');
  const rv=document.getElementById('ocrReview');
- requestAnimationFrame(()=>{
-  requestAnimationFrame(()=>{
-   if(rv){
-    const rect=rv.getBoundingClientRect();
-    const target=Math.max(0,(window.scrollY||window.pageYOffset||0)+rect.top-(window.innerHeight-rect.height)/2);
-    window.scrollTo({top:target,behavior:'smooth'});
-   }
-  });
- });
+ requestAnimationFrame(()=>requestAnimationFrame(()=>{
+  if(rv){
+   const rect=rv.getBoundingClientRect();
+   const target=Math.max(0,(window.scrollY||window.pageYOffset||0)+rect.top-(window.innerHeight-rect.height)/2);
+   window.scrollTo({top:target,behavior:'smooth'});
+  }
+ }));
 }
 
 async function loadTesseract(){if(window.Tesseract)return true;document.getElementById('ocrStatus').textContent='사진 인식 엔진을 불러오는 중…';return new Promise(resolve=>{const s=document.createElement('script');s.src='https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js';s.onload=()=>resolve(true);s.onerror=()=>resolve(false);document.head.appendChild(s)})}
@@ -252,8 +289,44 @@ document.addEventListener('wheel',e=>{
 },{passive:false,capture:true});
 
 document.getElementById('resetCropBtn').addEventListener('click',resetCrop);
-function croppedProcessedCanvas(){const img=cropImage,sx=Math.round(img.naturalWidth*cropRect.x),sy=Math.round(img.naturalHeight*cropRect.y),sw=Math.max(1,Math.round(img.naturalWidth*cropRect.w)),sh=Math.max(1,Math.round(img.naturalHeight*cropRect.h));let scale=Math.max(1,Math.min(6,1800/sw));if(sw<700)scale=Math.min(7,scale*1.35);const c=document.createElement('canvas');c.width=Math.round(sw*scale);c.height=Math.round(sh*scale);const x=c.getContext('2d',{willReadFrequently:true});x.imageSmoothingEnabled=true;x.imageSmoothingQuality='high';x.drawImage(img,sx,sy,sw,sh,0,0,c.width,c.height);const d=x.getImageData(0,0,c.width,c.height),p=d.data;let lo=255,hi=0;for(let i=0;i<p.length;i+=4){const g=Math.round(.299*p[i]+.587*p[i+1]+.114*p[i+2]);p[i]=p[i+1]=p[i+2]=g;lo=Math.min(lo,g);hi=Math.max(hi,g)}const span=Math.max(30,hi-lo);for(let i=0;i<p.length;i+=4){let g=(p[i]-lo)*255/span;g=(g-128)*1.25+128;g=Math.max(0,Math.min(255,g));p[i]=p[i+1]=p[i+2]=g}x.putImageData(d,0,0);return c}
-async function runCropOcr(){if(!cropImage)return;unlockCropScreen();const status=document.getElementById('ocrStatus');const ok=await loadTesseract();if(!ok){status.textContent='자동 인식 엔진을 불러오지 못했습니다. 직접 입력은 정상 사용 가능합니다.';return}try{const canvas=croppedProcessedCanvas();const result=await Tesseract.recognize(canvas,'eng',{logger:m=>{if(m.status==='recognizing text')status.textContent=`선택 영역 인식 중… ${Math.round((m.progress||0)*100)}%`}});ocr=parseBiometry(result.data.text||'');status.textContent='인식 완료 — 아래 값을 확인해주세요.';renderOcr();showOcrReviewCentered()}catch(err){console.error(err);status.textContent='자동 인식에 실패했습니다. 영역을 다시 선택하거나 직접 입력해주세요.'}}
+function croppedProcessedCanvas(){
+ const img=cropImage;
+ const sx=Math.round(img.naturalWidth*cropRect.x),sy=Math.round(img.naturalHeight*cropRect.y);
+ const sw=Math.max(1,Math.round(img.naturalWidth*cropRect.w)),sh=Math.max(1,Math.round(img.naturalHeight*cropRect.h));
+ let scale=Math.max(1,Math.min(5,1700/sw));
+ if(sw<700)scale=Math.min(6,scale*1.25);
+ const c=document.createElement('canvas');
+ c.width=Math.max(1,Math.round(sw*scale));c.height=Math.max(1,Math.round(sh*scale));
+ const x=c.getContext('2d',{willReadFrequently:true});
+ x.imageSmoothingEnabled=true;x.imageSmoothingQuality='high';
+ x.drawImage(img,sx,sy,sw,sh,0,0,c.width,c.height);
+ const d=x.getImageData(0,0,c.width,c.height),p=d.data;
+ const hist=new Uint32Array(256);
+ for(let i=0;i<p.length;i+=4){
+   const g=Math.round(.299*p[i]+.587*p[i+1]+.114*p[i+2]);
+   p[i]=p[i+1]=p[i+2]=g;hist[g]++;
+ }
+ const total=c.width*c.height;
+ let acc=0,lo=0,hi=255;
+ for(let i=0;i<256;i++){acc+=hist[i];if(acc>=total*.02){lo=i;break}}
+ acc=0;for(let i=255;i>=0;i--){acc+=hist[i];if(acc>=total*.02){hi=i;break}}
+ const span=Math.max(55,hi-lo);
+ for(let i=0;i<p.length;i+=4){
+   let g=(p[i]-lo)*255/span;
+   g=(g-128)*1.45+128;
+   if(g<48)g=0; else if(g>210)g=255;
+   g=Math.max(0,Math.min(255,g));
+   p[i]=p[i+1]=p[i+2]=g;
+ }
+ x.putImageData(d,0,0);
+ return c;
+}
+async function runCropOcr(){if(!cropImage)return;unlockCropScreen();const status=document.getElementById('ocrStatus');const ok=await loadTesseract();if(!ok){status.textContent='자동 인식 엔진을 불러오지 못했습니다. 직접 입력은 정상 사용 가능합니다.';return}try{const canvas=croppedProcessedCanvas();const result=await Tesseract.recognize(canvas,'eng',{
+ logger:m=>{if(m.status==='recognizing text')status.textContent=`선택 영역 인식 중… ${Math.round((m.progress||0)*100)}%`},
+ tessedit_pageseg_mode:11,
+ preserve_interword_spaces:'1',
+ user_defined_dpi:'300'
+});ocr=parseBiometry(result.data.text||'');status.textContent='인식 완료 — 아래 값을 확인해주세요.';renderOcr();showOcrReviewCentered()}catch(err){console.error(err);status.textContent='자동 인식에 실패했습니다. 영역을 다시 선택하거나 직접 입력해주세요.'}}
 document.getElementById('recognizeCropBtn').addEventListener('click',runCropOcr);
 
 let cropScrollY=0;
@@ -276,7 +349,55 @@ function unlockCropScreen(){
  window.scrollTo(0,y);
 }
 
+
+let cameraStream=null;
+async function openLiveCamera(){
+ const modal=document.getElementById('cameraModal'),video=document.getElementById('cameraVideo'),status=document.getElementById('ocrStatus');
+ if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){
+   status.textContent='이 브라우저에서는 카메라 직접 촬영을 지원하지 않습니다. 사진 불러오기를 사용해주세요.';
+   return;
+ }
+ try{
+   cameraStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'},width:{ideal:1920},height:{ideal:1080}},audio:false});
+   video.srcObject=cameraStream;
+   modal.classList.add('show');modal.setAttribute('aria-hidden','false');
+ }catch(err){
+   console.error(err);
+   status.textContent='카메라를 열 수 없습니다. 브라우저 카메라 권한을 확인해주세요.';
+ }
+}
+function closeLiveCamera(){
+ const modal=document.getElementById('cameraModal'),video=document.getElementById('cameraVideo');
+ if(cameraStream){cameraStream.getTracks().forEach(t=>t.stop());cameraStream=null}
+ video.srcObject=null;modal.classList.remove('show');modal.setAttribute('aria-hidden','true');
+}
+async function useCapturedImage(){
+ const video=document.getElementById('cameraVideo');
+ if(!video.videoWidth||!video.videoHeight)return;
+ const c=document.createElement('canvas');c.width=video.videoWidth;c.height=video.videoHeight;
+ c.getContext('2d').drawImage(video,0,0,c.width,c.height);
+ const img=new Image();
+ const data=c.toDataURL('image/jpeg',.94);
+ await new Promise((resolve,reject)=>{img.onload=resolve;img.onerror=reject;img.src=data});
+ cropImage=img;closeLiveCamera();resetCrop();drawCropPreview();
+ document.getElementById('cropPanel').classList.add('show');
+ document.getElementById('ocrReview').classList.remove('show');
+ document.getElementById('ocrStatus').textContent='인식할 영역을 조절한 뒤 “선택 영역 인식”을 누르세요.';
+ lockCropScreen();
+}
+document.getElementById('openCameraBtn').addEventListener('click',openLiveCamera);
+document.getElementById('closeCameraBtn').addEventListener('click',closeLiveCamera);
+document.getElementById('captureCameraBtn').addEventListener('click',()=>{useCapturedImage().catch(console.error)});
+
 document.getElementById('photoInput').addEventListener('change',async e=>{const f=e.target.files&&e.target.files[0];if(!f)return;try{cropImage=await loadImageFile(f);resetCrop();drawCropPreview();document.getElementById('cropPanel').classList.add('show');document.getElementById('ocrReview').classList.remove('show');document.getElementById('ocrStatus').textContent='인식할 영역을 조절한 뒤 “선택 영역 인식”을 누르세요.';lockCropScreen()}catch(err){console.error(err);document.getElementById('ocrStatus').textContent='사진을 불러오지 못했습니다.'}});
+
+document.getElementById('retryCropBtn').addEventListener('click',()=>{
+ if(!cropImage)return;
+ document.getElementById('cropPanel').classList.add('show');
+ lockCropScreen();
+ requestAnimationFrame(()=>{drawCropPreview();placeCropBox()});
+});
+
 document.getElementById('applyOcrBtn').addEventListener('click',()=>{if(ocr.k!=null&&ocr.tk!=null&&ocr.selectedK==null){alert('K 또는 TK를 선택해주세요.');return}if(ocr.al!=null)document.getElementById('al').value=ocr.al.toFixed(2);const kval=ocr.selectedK!=null?ocr.selectedK:(ocr.tk!=null&&ocr.k==null?ocr.tk:ocr.k);if(kval!=null){document.getElementById('k').value=kval.toFixed(2);lastKSource=ocr.selectedSource||(ocr.tk!=null&&ocr.k==null?'TK':'K')}if(ocr.acd!=null)document.getElementById('acd').value=ocr.acd.toFixed(2);window.scrollTo({top:0,behavior:'smooth'})});
 
 document.getElementById('resetAllBtn').addEventListener('click',()=>{
