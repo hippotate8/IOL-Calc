@@ -1,6 +1,6 @@
 {
   "name": "IOL Formula Selector",
-  "short_name": "IOL Formula",
+  "short_name": "IOL Selector",
   "start_url": "./",
   "display": "standalone",
   "background_color": "#ffffff",

@@ -1,13 +1,10 @@
-IOL Formula Selector v3
+IOL Formula Selector v8
 
-Changes in v3:
-- Compact Photo Recognition panel: camera icon and text on one line.
-- Photo crop workflow before OCR; drag/resize the crop rectangle.
-- OCR logic simplified from v2 and focused on AL, K/TK, ACD.
-- Physiologic plausibility filters: AL 15-40 mm, K/TK 30-60 D, ACD 1-8 mm.
-- IOLMaster-style SE is treated as mean K; fallback is mean of K1/K2. TSE/TK1/TK2 supported for TK.
-- OCR review guidance: "인식 오류가 있으면 적용 후 직접 수정하세요."
-- Input/result order: AL, K (or TK), ACD.
-- Formula recommendation table and boundary-clamping behavior preserved.
+GitHub Pages:
+1. 이 ZIP을 압축 해제합니다.
+2. 저장소 root의 기존 파일을 v8 파일로 교체합니다.
+3. 특히 index.html, sw.js, manifest.webmanifest를 반드시 함께 업로드합니다.
+4. Commit 후 GitHub Pages 배포 완료를 기다립니다.
 
-Deployment: unzip and upload all files to the GitHub Pages repository root, replacing prior version files.
+v8은 기존 오래된 service-worker cache를 삭제하고 HTML을 network-first로 갱신합니다.
+첫 접속 시 이전 service worker가 활성화되어 있었다면 한 번 자동 reload될 수 있습니다.
