@@ -1,9 +1,11 @@
-IOL Formula Selector v12
+IOL Formula Selector v13
 
-Crop UX 개선:
-- 사진을 선택하면 crop 화면이 자동으로 화면 정중앙에 고정됩니다.
-- crop 조정 중에는 페이지 스크롤이 잠깁니다.
-- crop 박스 내부/핸들 드래그만 허용되고 바깥 배경 스와이프는 스크롤되지 않습니다.
-- '선택 영역 인식'을 누르는 순간 스크롤 잠금이 해제됩니다.
-- 기존 v5 기반 OCR 방식은 그대로 유지합니다.
-- 스마트폰 cache 제거 방식도 유지합니다.
+iPhone/Safari crop scroll lock 강화:
+- crop 시작 시 body를 현재 scroll 위치에서 position:fixed로 고정
+- html/body 모두 overscroll 차단
+- touchmove를 capture 단계에서 preventDefault
+- wheel도 crop 중 차단
+- crop-stage / crop-box / handles 모두 touch-action:none
+- '선택 영역 인식' 클릭 시 잠금 해제 후 원래 scroll 위치 복원
+- v5 기반 OCR 유지
+- 최종 패키지에서 v11.html/v12.html 제거
