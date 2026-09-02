@@ -9,7 +9,7 @@
 <link rel="manifest" href="manifest.webmanifest">
 <meta name="theme-color" content="#008991">
 <title>IOL Formula Selector</title>
-<meta name="app-version" content="19.0">
+<meta name="app-version" content="20.0">
 <style>
 :root{--teal:#008991;--teal2:#00747b;--mint:#edfafa;--line:#dce8e8;--text:#172227;--muted:#68777d}
 *{box-sizing:border-box} body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Noto Sans KR",Arial,sans-serif;color:var(--text);background:#f7f9f9}.app{max-width:1120px;margin:0 auto;min-height:100vh;background:#fff}
@@ -135,28 +135,28 @@ body.crop-locked .crop-panel.show .crop-actions{
 <main>
   <div class="grid">
     <section class="card"><h2>Manual Input</h2>
-      <div class="field"><label for="al">AL <small>Axial Length</small></label><div class="input-wrap"><input id="al" type="number" step="0.01" inputmode="decimal" placeholder="예: 24.05"><span class="unit">mm</span></div></div>
-      <div class="field"><label for="k">K (or TK) <small>Mean keratometry</small></label><div class="input-wrap"><input id="k" type="number" step="0.01" inputmode="decimal" placeholder="예: 43.00"><span class="unit">D</span></div></div>
-      <div class="field"><label for="acd">ACD <small>Anterior Chamber Depth</small></label><div class="input-wrap"><input id="acd" type="number" step="0.01" inputmode="decimal" placeholder="예: 3.09"><span class="unit">mm</span></div></div>
+      <div class="field"><label for="al">AL <small>Axial Length</small></label><div class="input-wrap"><input id="al" type="number" step="0.01" inputmode="decimal" placeholder="e.g., 24.05"><span class="unit">mm</span></div></div>
+      <div class="field"><label for="k">K (or TK) <small>Mean keratometry</small></label><div class="input-wrap"><input id="k" type="number" step="0.01" inputmode="decimal" placeholder="e.g., 43.00"><span class="unit">D</span></div></div>
+      <div class="field"><label for="acd">ACD <small>Anterior Chamber Depth</small></label><div class="input-wrap"><input id="acd" type="number" step="0.01" inputmode="decimal" placeholder="e.g., 3.09"><span class="unit">mm</span></div></div>
       <button class="btn primary" id="recommendBtn">Recommend Formula</button>
     </section>
-    <section class="card camera-card"><h2>Photo Recognition</h2><p class="sub">Biometry 화면 또는 출력물을 촬영하세요.</p>
+    <section class="card camera-card"><h2>Photo Recognition</h2><p class="sub">Capture or import a biometry screen/report.</p>
       <div class="camera-actions-top">
-        <button class="camera-zone camera-button" id="openCameraBtn" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M4 7h3l1.4-2h7.2L17 7h3a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2Z"/><circle cx="12" cy="13" r="4"/></svg><strong id="captureModeLabel"><span class="label-word">사진</span><span class="label-word">찍기</span></strong></button>
-        <label class="camera-zone file-button" for="photoInput"><strong>사진 불러오기</strong></label>
+        <button class="camera-zone camera-button" id="openCameraBtn" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M4 7h3l1.4-2h7.2L17 7h3a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2Z"/><circle cx="12" cy="13" r="4"/></svg><strong id="captureModeLabel"><span class="label-word">Take</span><span class="label-word">Photo</span></strong></button>
+        <label class="camera-zone file-button" for="photoInput"><strong>Import Photo</strong></label>
       </div>
       <input id="photoInput" type="file" accept="image/*"><div class="ocr-status" id="ocrStatus"></div>
-      <div class="crop-panel" id="cropPanel"><div class="crop-title"><b>인식할 영역 선택</b><span>숫자와 항목명이 있는 부분만 선택하세요.</span></div><div class="crop-stage" id="cropStage"><canvas id="cropCanvas"></canvas><div class="crop-box" id="cropBox"><span class="crop-handle nw" data-handle="nw"></span><span class="crop-handle ne" data-handle="ne"></span><span class="crop-handle sw" data-handle="sw"></span><span class="crop-handle se" data-handle="se"></span></div></div><div class="crop-actions"><button class="btn secondary" id="resetCropBtn" type="button">전체 영역</button><button class="btn primary" id="recognizeCropBtn" type="button">선택 영역 인식</button></div></div>
-      <div class="ocr-review" id="ocrReview"><div class="ocr-review-head"><h3>인식 결과 확인</h3><span class="ocr-hint">인식 오류가 있으면 적용 후 직접 수정하세요.</span></div><div id="ocrSummary"></div><div id="kChoiceBox" style="display:none"><div style="font-size:13px;color:#667;margin-top:8px">K와 TK가 모두 인식되었습니다. 사용할 값을 선택하세요.</div><div class="choices" id="kChoices"></div></div>
+      <div class="crop-panel" id="cropPanel"><div class="crop-title"><b>Select Recognition Area</b><span>Select only the area containing labels and values.</span></div><div class="crop-stage" id="cropStage"><canvas id="cropCanvas"></canvas><div class="crop-box" id="cropBox"><span class="crop-handle nw" data-handle="nw"></span><span class="crop-handle ne" data-handle="ne"></span><span class="crop-handle sw" data-handle="sw"></span><span class="crop-handle se" data-handle="se"></span></div></div><div class="crop-actions"><button class="btn secondary" id="resetCropBtn" type="button">Full Image</button><button class="btn primary" id="recognizeCropBtn" type="button">Recognize Selection</button></div></div>
+      <div class="ocr-review" id="ocrReview"><div class="ocr-review-head"><h3>Review Recognition Results</h3><span class="ocr-hint">If recognition is incorrect, apply and edit manually.</span></div><div id="ocrSummary"></div><div id="kChoiceBox" style="display:none"><div style="font-size:13px;color:#667;margin-top:8px">Both K and TK were recognized. Select which value to use.</div><div class="choices" id="kChoices"></div></div>
       <button class="ocr-preview-wrap" id="ocrPreviewBtn" type="button" aria-label="캡처 이미지 크게 보기">
         <img id="ocrPreviewImg" alt="캡처 이미지 미리보기">
-        <span>캡처 이미지 · 눌러서 크게 보기</span>
+        <span>Captured image · Tap to enlarge</span>
       </button>
-      <div class="ocr-review-actions"><button class="btn secondary" id="retryCropBtn" type="button">다시 Crop</button><button class="btn primary" id="applyOcrBtn" type="button">입력창에 적용</button></div></div>
+      <div class="ocr-review-actions"><button class="btn secondary" id="retryCropBtn" type="button">Re-crop</button><button class="btn primary" id="applyOcrBtn" type="button">Apply to Inputs</button></div></div>
     </section>
   </div>
   <section class="result" id="result">
-<div class="result-actions"><button class="reset-result-btn" id="resetAllBtn" type="button">↻ 초기화</button></div>
+<div class="result-actions"><button class="reset-result-btn" id="resetAllBtn" type="button">↻ Reset</button></div>
 <div class="result-head"><div class="recommended"><small>Recommended Formula</small><div class="formula" id="formula">—</div></div><div class="eye-tag" id="eyeTag" style="display:none"></div></div>
 <div class="result-body"><div class="values-line"><div><span>AL</span><b id="rAl"></b></div><div><span>K/TK</span><b id="rK"></b></div><div><span>ACD</span><b id="rAcd"></b></div></div></div>
 </section>
@@ -164,15 +164,15 @@ body.crop-locked .crop-panel.show .crop-actions{
 <div class="image-preview-modal" id="imagePreviewModal" aria-hidden="true">
   <div class="image-preview-dialog">
     <img id="imagePreviewLarge" alt="캡처 이미지 크게 보기">
-    <button class="btn secondary" id="closeImagePreviewBtn" type="button">닫기</button>
+    <button class="btn secondary" id="closeImagePreviewBtn" type="button">Close</button>
   </div>
 </div>
 <div class="camera-modal" id="cameraModal" aria-hidden="true">
   <div class="camera-dialog">
     <video id="cameraVideo" playsinline autoplay muted></video>
     <div class="camera-modal-actions">
-      <button class="btn secondary" id="closeCameraBtn" type="button">취소</button>
-      <button class="btn primary" id="captureCameraBtn" type="button">촬영</button>
+      <button class="btn secondary" id="closeCameraBtn" type="button">Cancel</button>
+      <button class="btn primary" id="captureCameraBtn" type="button">Capture</button>
     </div>
   </div>
 </div>
@@ -195,9 +195,9 @@ function plausible(v,[lo,hi]){return Number.isFinite(v)&&v>=lo&&v<=hi?v:null}
 function cleanText(t){return String(t||'').replace(/,/g,'.').replace(/(\d)[:;](\d)/g,'$1.$2').replace(/\r/g,'').replace(/[|]/g,'I')}
 function normalizeOcrLabels(t){
  return cleanText(t)
-  .replace(/\bA\s*[1Il|]\b/gi,'AL').replace(/\bA[L1I|][^A-Z0-9]{0,2}(?=\d)/gi,'AL ')
+  .replace(/\bA\s*[1Il|]\b/gi,'AL').replace(/\b4L\b/gi,'AL').replace(/\bA7\b/gi,'AL').replace(/\bA[L1I|][^A-Z0-9]{0,2}(?=\d)/gi,'AL ')
   .replace(/\bA\s+L\b/gi,'AL')
-  .replace(/\bA[C6GQ]\s*[D0O]\b/gi,'ACD').replace(/\bA.?C.?[D0O]\b/gi,'ACD')
+  .replace(/\bA[C6GQ]\s*[D0O]\b/gi,'ACD').replace(/\bAC[0OQ]\b/gi,'ACD').replace(/\bAOD\b/gi,'ACD').replace(/\bA.?C.?[D0O]\b/gi,'ACD')
   .replace(/\bA\s*C\s*D\b/gi,'ACD')
   .replace(/\bK\s*[Il|]\b/gi,'K1')
   .replace(/\bK\s*[Zz]\b/gi,'K2')
@@ -307,6 +307,34 @@ function parseBiometry(text){
    if(cand.length===1)k=cand[0];
  }
 
+ 
+ // Recover missing decimal points in label-adjacent OCR values.
+ const rawLines=t.split(/\n+/);
+ if(al==null){
+   for(const ln of rawLines){
+     if(/\bAL\b/i.test(ln)){
+       const m=ln.match(/\b(1[8-9]\d{2}|2\d{3}|3[0-5]\d{2})\b/);
+       if(m){const v=Number(m[1])/100;if(v>=15&&v<=40){al=v;break}}
+     }
+   }
+ }
+ if(acd==null){
+   for(const ln of rawLines){
+     if(/\bACD\b/i.test(ln)){
+       const m=ln.match(/\b([1-8]\d{2})\b/);
+       if(m){const v=Number(m[1])/100;if(v>=1&&v<=8){acd=v;break}}
+     }
+   }
+ }
+ if(k==null){
+   for(const ln of rawLines){
+     if(/(?:^|\s)(?:SE|K|K1|K2)(?:\s|$)/i.test(ln)){
+       const m=ln.match(/\b([3-5]\d{3})\b/);
+       if(m){const v=Number(m[1])/100;if(v>=30&&v<=60){k=v;break}}
+     }
+   }
+ }
+
  const both=k!=null&&tk!=null;
  return{al,acd,k,tk,k1,k2,tk1,tk2,se,tse,selectedK:both?null:(tk!=null?tk:k),selectedSource:both?null:(tk!=null?'TK':'K')};
 }
@@ -381,7 +409,7 @@ function showOcrReviewCentered(){
  }));
 }
 
-async function loadTesseract(){if(window.Tesseract)return true;document.getElementById('ocrStatus').textContent='사진 인식 엔진을 불러오는 중…';return new Promise(resolve=>{const s=document.createElement('script');s.src='https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js';s.onload=()=>resolve(true);s.onerror=()=>resolve(false);document.head.appendChild(s)})}
+async function loadTesseract(){if(window.Tesseract)return true;document.getElementById('ocrStatus').textContent='Loading recognition engine…';return new Promise(resolve=>{const s=document.createElement('script');s.src='https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js';s.onload=()=>resolve(true);s.onerror=()=>resolve(false);document.head.appendChild(s)})}
 async function loadImageFile(file){return new Promise((resolve,reject)=>{const img=new Image();const u=URL.createObjectURL(file);img.onload=()=>{URL.revokeObjectURL(u);resolve(img)};img.onerror=reject;img.src=u})}
 function drawCropPreview(){if(!cropImage)return;const c=document.getElementById('cropCanvas'),maxW=1100,scale=Math.min(1,maxW/cropImage.naturalWidth);c.width=Math.max(1,Math.round(cropImage.naturalWidth*scale));c.height=Math.max(1,Math.round(cropImage.naturalHeight*scale));const ctx=c.getContext('2d');ctx.drawImage(cropImage,0,0,c.width,c.height);placeCropBox()}
 function placeCropBox(){const b=document.getElementById('cropBox'),c=document.getElementById('cropCanvas');b.style.left=(c.offsetLeft+cropRect.x*c.clientWidth)+'px';b.style.top=(c.offsetTop+cropRect.y*c.clientHeight)+'px';b.style.width=(cropRect.w*c.clientWidth)+'px';b.style.height=(cropRect.h*c.clientHeight)+'px'}
@@ -452,42 +480,101 @@ function croppedProcessedCanvas(rect=cropRect){
  x.putImageData(d,0,0);
  return c;
 }
+
+function croppedProcessedCanvasAlt(rect=cropRect){
+ const img=cropImage;
+ const sx=Math.round(img.naturalWidth*rect.x),sy=Math.round(img.naturalHeight*rect.y);
+ const sw=Math.max(1,Math.round(img.naturalWidth*rect.w)),sh=Math.max(1,Math.round(img.naturalHeight*rect.h));
+ let scale=Math.max(1,Math.min(6,1900/sw));
+ if(sw<700)scale=Math.min(7,scale*1.3);
+ const c=document.createElement('canvas');
+ c.width=Math.max(1,Math.round(sw*scale));
+ c.height=Math.max(1,Math.round(sh*scale));
+ const x=c.getContext('2d',{willReadFrequently:true});
+ x.imageSmoothingEnabled=true;
+ x.imageSmoothingQuality='high';
+ x.drawImage(img,sx,sy,sw,sh,0,0,c.width,c.height);
+ const d=x.getImageData(0,0,c.width,c.height),p=d.data;
+ let sum=0;
+ for(let i=0;i<p.length;i+=4){
+   const g=Math.round(.299*p[i]+.587*p[i+1]+.114*p[i+2]);
+   p[i]=p[i+1]=p[i+2]=g;
+   sum+=g;
+ }
+ const mean=sum/(c.width*c.height);
+ const threshold=Math.max(95,Math.min(190,mean*.88));
+ for(let i=0;i<p.length;i+=4){
+   const v=p[i]<threshold?0:255;
+   p[i]=p[i+1]=p[i+2]=v;
+ }
+ x.putImageData(d,0,0);
+ return c;
+}
+
+function mergeOcr(primary,secondary){
+ const out={...primary};
+ const keys=['al','acd','k','tk','k1','k2','tk1','tk2','se','tse'];
+ keys.forEach(k=>{if(out[k]==null&&secondary[k]!=null)out[k]=secondary[k]});
+ if(out.selectedK==null&&secondary.selectedK!=null)out.selectedK=secondary.selectedK;
+ if(out.selectedSource==null&&secondary.selectedSource!=null)out.selectedSource=secondary.selectedSource;
+ const both=out.k!=null&&out.tk!=null;
+ if(!both&&out.selectedK==null){
+   if(out.tk!=null&&out.k==null){out.selectedK=out.tk;out.selectedSource='TK'}
+   else if(out.k!=null&&out.tk==null){out.selectedK=out.k;out.selectedSource='K'}
+ }
+ return out;
+}
+
 async function runCropOcr(){
  if(!cropImage)return;
 
- // Freeze exactly what the user sees BEFORE any async work or layout change.
  const visualRect=getVisualCropRect();
  cropRect={...visualRect};
  const frozenCanvas=croppedProcessedCanvas(visualRect);
+ const frozenCanvasAlt=croppedProcessedCanvasAlt(visualRect);
 
  const status=document.getElementById('ocrStatus');
-
- // Leave crop mode only after the selected pixels have already been frozen.
  document.getElementById('cropPanel').classList.remove('show');
  unlockCropScreen();
 
  const ok=await loadTesseract();
  if(!ok){
-   status.textContent='자동 인식 엔진을 불러오지 못했습니다. “다시 Crop”으로 같은 사진을 다시 선택할 수 있습니다.';
+   status.textContent='Could not load the recognition engine. Use “Re-crop” to try the same image again.';
    renderOcr();
    showOcrReviewCentered();
    return;
  }
 
  try{
-   const result=await Tesseract.recognize(frozenCanvas,'eng',{
-     logger:m=>{if(m.status==='recognizing text')status.textContent=`선택 영역 인식 중… ${Math.round((m.progress||0)*100)}%`},
+   status.textContent='Recognizing selection…';
+   const result1=await Tesseract.recognize(frozenCanvas,'eng',{
+     logger:m=>{if(m.status==='recognizing text')status.textContent=`Recognizing selection… ${Math.round((m.progress||0)*100)}%`},
      tessedit_pageseg_mode:11,
      preserve_interword_spaces:'1',
      user_defined_dpi:'300'
    });
-   ocr=parseBiometry(result.data.text||'');
-   status.textContent='인식 완료 — 아래 값을 확인해주세요.';
+
+   let parsed1=parseBiometry(result1.data.text||'');
+   ocr=parsed1;
+
+   if(parsed1.al==null || (parsed1.k==null && parsed1.tk==null) || parsed1.acd==null){
+     status.textContent='Improving recognition…';
+     const result2=await Tesseract.recognize(frozenCanvasAlt,'eng',{
+       logger:m=>{if(m.status==='recognizing text')status.textContent=`Improving recognition… ${Math.round((m.progress||0)*100)}%`},
+       tessedit_pageseg_mode:6,
+       preserve_interword_spaces:'1',
+       user_defined_dpi:'300'
+     });
+     const parsed2=parseBiometry(result2.data.text||'');
+     ocr=mergeOcr(parsed1,parsed2);
+   }
+
+   status.textContent='Recognition complete — please review the values below.';
    renderOcr();
    showOcrReviewCentered();
  }catch(err){
    console.error(err);
-   status.textContent='자동 인식에 실패했습니다. “다시 Crop”으로 같은 사진에서 영역을 다시 선택해주세요.';
+   status.textContent='Recognition failed. Use “Re-crop” to select the area again on the same image.';
    renderOcr();
    showOcrReviewCentered();
  }
@@ -529,10 +616,10 @@ function updateCaptureModeUI(){
  const captureBtn=document.getElementById('captureCameraBtn');
  if(label){
    label.innerHTML=captureMode==='screen'
-     ?'<span class="label-word">스크린</span><span class="label-word">캡쳐</span>'
-     :'<span class="label-word">사진</span><span class="label-word">찍기</span>';
+     ?'<span class="label-word">Screen</span><span class="label-word">Capture</span>'
+     :'<span class="label-word">Take</span><span class="label-word">Photo</span>';
  }
- if(captureBtn)captureBtn.textContent=captureMode==='screen'?'캡쳐':'촬영';
+ if(captureBtn)captureBtn.textContent=captureMode==='screen'?'캡쳐':'Capture';
 }
 
 
@@ -563,7 +650,7 @@ async function streamToCropImage(stream){
  document.getElementById('ocrReview').classList.remove('show');
  document.getElementById('ocrPreviewBtn').classList.remove('show');
  closeImagePreview();
- document.getElementById('ocrStatus').textContent='인식할 영역을 조절한 뒤 “선택 영역 인식”을 누르세요.';
+ document.getElementById('ocrStatus').textContent='Adjust the crop area, then tap “Recognize Selection”.';
  lockCropScreen();
 }
 
@@ -575,26 +662,26 @@ async function openLiveCamera(){
 
  if(captureMode==='screen'){
    if(!navigator.mediaDevices || !navigator.mediaDevices.getDisplayMedia){
-     status.textContent='이 브라우저에서는 스크린 캡쳐를 지원하지 않습니다. 사진 불러오기를 사용해주세요.';
+     status.textContent='이 브라우저에서는 스크린 캡쳐를 지원하지 않습니다. Import Photo를 사용해주세요.';
      return;
    }
    try{
-     status.textContent='캡쳐할 화면을 선택해주세요.';
+     status.textContent='Select the screen, window, or tab to capture.';
      const stream=await navigator.mediaDevices.getDisplayMedia({
        video:{cursor:'always'},
        audio:false
      });
-     status.textContent='화면 캡쳐 중…';
+     status.textContent='Capturing screen…';
      await streamToCropImage(stream);
    }catch(err){
      console.error(err);
-     status.textContent='스크린 캡쳐가 취소되었거나 화면 공유 권한을 사용할 수 없습니다.';
+     status.textContent='스크린 캡쳐가 Cancel되었거나 화면 공유 권한을 사용할 수 없습니다.';
    }
    return;
  }
 
  if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){
-   status.textContent='이 브라우저에서는 카메라 직접 촬영을 지원하지 않습니다. 사진 불러오기를 사용해주세요.';
+   status.textContent='이 브라우저에서는 카메라 직접 Capture을 지원하지 않습니다. Import Photo를 사용해주세요.';
    return;
  }
  try{
@@ -607,7 +694,7 @@ async function openLiveCamera(){
    modal.setAttribute('aria-hidden','false');
  }catch(err){
    console.error(err);
-   status.textContent='카메라를 열 수 없습니다. 브라우저 카메라 권한을 확인해주세요.';
+   status.textContent='Could not open the camera. Please check camera permission.';
  }
 }
 
@@ -641,7 +728,7 @@ async function useCapturedImage(){
  drawCropPreview();
  document.getElementById('cropPanel').classList.add('show');
  document.getElementById('ocrReview').classList.remove('show');
- document.getElementById('ocrStatus').textContent='인식할 영역을 조절한 뒤 “선택 영역 인식”을 누르세요.';
+ document.getElementById('ocrStatus').textContent='Adjust the crop area, then tap “Recognize Selection”.';
  lockCropScreen();
 }
 
@@ -651,7 +738,7 @@ document.getElementById('captureCameraBtn').addEventListener('click',()=>{useCap
 window.addEventListener('resize',updateCaptureModeUI);
 updateCaptureModeUI();
 
-document.getElementById('photoInput').addEventListener('change',async e=>{const f=e.target.files&&e.target.files[0];if(!f)return;try{cropImage=await loadImageFile(f);resetCrop();drawCropPreview();document.getElementById('cropPanel').classList.add('show');document.getElementById('ocrReview').classList.remove('show');document.getElementById('ocrStatus').textContent='인식할 영역을 조절한 뒤 “선택 영역 인식”을 누르세요.';lockCropScreen()}catch(err){console.error(err);document.getElementById('ocrStatus').textContent='사진을 불러오지 못했습니다.'}});
+document.getElementById('photoInput').addEventListener('change',async e=>{const f=e.target.files&&e.target.files[0];if(!f)return;try{cropImage=await loadImageFile(f);resetCrop();drawCropPreview();document.getElementById('cropPanel').classList.add('show');document.getElementById('ocrReview').classList.remove('show');document.getElementById('ocrStatus').textContent='Adjust the crop area, then tap “Recognize Selection”.';lockCropScreen()}catch(err){console.error(err);document.getElementById('ocrStatus').textContent='사진을 불러오지 못했습니다.'}});
 
 document.getElementById('ocrPreviewBtn').addEventListener('click',openImagePreview);
 document.getElementById('closeImagePreviewBtn').addEventListener('click',closeImagePreview);
@@ -667,7 +754,7 @@ document.getElementById('retryCropBtn').addEventListener('click',()=>{
  });
 });
 
-document.getElementById('applyOcrBtn').addEventListener('click',()=>{if(ocr.k!=null&&ocr.tk!=null&&ocr.selectedK==null){alert('K 또는 TK를 선택해주세요.');return}if(ocr.al!=null)document.getElementById('al').value=ocr.al.toFixed(2);const kval=ocr.selectedK!=null?ocr.selectedK:(ocr.tk!=null&&ocr.k==null?ocr.tk:ocr.k);if(kval!=null){document.getElementById('k').value=kval.toFixed(2);lastKSource=ocr.selectedSource||(ocr.tk!=null&&ocr.k==null?'TK':'K')}if(ocr.acd!=null)document.getElementById('acd').value=ocr.acd.toFixed(2);window.scrollTo({top:0,behavior:'smooth'})});
+document.getElementById('applyOcrBtn').addEventListener('click',()=>{if(ocr.k!=null&&ocr.tk!=null&&ocr.selectedK==null){alert('Please select K or TK.');return}if(ocr.al!=null)document.getElementById('al').value=ocr.al.toFixed(2);const kval=ocr.selectedK!=null?ocr.selectedK:(ocr.tk!=null&&ocr.k==null?ocr.tk:ocr.k);if(kval!=null){document.getElementById('k').value=kval.toFixed(2);lastKSource=ocr.selectedSource||(ocr.tk!=null&&ocr.k==null?'TK':'K')}if(ocr.acd!=null)document.getElementById('acd').value=ocr.acd.toFixed(2);window.scrollTo({top:0,behavior:'smooth'})});
 
 document.getElementById('resetAllBtn').addEventListener('click',()=>{
  ['al','k','acd'].forEach(id=>document.getElementById(id).value='');

@@ -1,7 +1,11 @@
-IOL Formula Selector v19
+IOL Formula Selector v20
 
-- v18의 OCR/crop/screen capture 로직 유지.
-- 인식 결과 확인 영역에 캡처 원본의 작은 미리보기 추가.
-- 미리보기 클릭 시 전체 캡처 이미지를 큰 모달로 확인 가능.
-- 모달 바깥 클릭 또는 '닫기' 버튼으로 닫기.
-- 원본 이미지와 OCR 결과를 바로 비교한 뒤 '다시 Crop'으로 재시도 가능.
+Changes:
+- All visible Korean UI text changed to English.
+- Existing v19 crop/screen capture/preview behavior retained.
+- OCR recognition improved:
+  1) First pass uses existing enhanced grayscale/contrast preprocessing.
+  2) If AL, K/TK, or ACD is missing, a second OCR pass runs automatically with an alternate binary preprocessing method.
+  3) Results from both passes are merged.
+  4) Added correction for common OCR label errors and missing decimal points.
+- Second pass is conditional, so normal successful cases keep the faster single-pass behavior.
