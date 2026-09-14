@@ -9,7 +9,7 @@
 <link rel="manifest" href="manifest.webmanifest">
 <meta name="theme-color" content="#008991">
 <title>IOL Formula Selector</title>
-<meta name="app-version" content="25.0">
+<meta name="app-version" content="26.0">
 <style>
 :root{--teal:#008991;--teal2:#00747b;--mint:#edfafa;--line:#dce8e8;--text:#172227;--muted:#68777d}
 *{box-sizing:border-box} body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Noto Sans KR",Arial,sans-serif;color:var(--text);background:#f7f9f9}.app{max-width:1120px;margin:0 auto;min-height:100vh;background:#fff}
@@ -164,6 +164,42 @@ body.crop-locked .crop-panel.show .crop-actions{
   }
   .camera-actions-top .file-button{
     min-height:100px!important;
+  }
+}
+
+
+/* v26: hard-fix mobile Photo Recognition control size */
+@media(max-width:760px){
+  .camera-actions-top{
+    display:grid!important;
+    grid-template-columns:1fr 1fr!important;
+    gap:12px!important;
+    align-items:start!important;
+    grid-auto-rows:112px!important;
+  }
+  .camera-actions-top .camera-zone,
+  .camera-actions-top .camera-button,
+  .camera-actions-top .file-button{
+    box-sizing:border-box!important;
+    width:100%!important;
+    height:112px!important;
+    min-height:112px!important;
+    max-height:112px!important;
+    overflow:hidden!important;
+    align-self:start!important;
+    flex:none!important;
+  }
+  .camera-actions-top .camera-button,
+  .camera-actions-top .file-button{
+    display:flex!important;
+    align-items:center!important;
+    justify-content:center!important;
+  }
+  .camera-actions-top .file-button input{
+    position:absolute!important;
+    inset:0!important;
+    width:100%!important;
+    height:100%!important;
   }
 }
 
