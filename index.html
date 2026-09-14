@@ -9,7 +9,7 @@
 <link rel="manifest" href="manifest.webmanifest">
 <meta name="theme-color" content="#008991">
 <title>IOL Formula Selector</title>
-<meta name="app-version" content="26.0">
+<meta name="app-version" content="27.0">
 <style>
 :root{--teal:#008991;--teal2:#00747b;--mint:#edfafa;--line:#dce8e8;--text:#172227;--muted:#68777d}
 *{box-sizing:border-box} body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Noto Sans KR",Arial,sans-serif;color:var(--text);background:#f7f9f9}.app{max-width:1120px;margin:0 auto;min-height:100vh;background:#fff}
@@ -561,100 +561,43 @@ function croppedProcessedCanvas(rect=cropRect){
  return c;
 }
 
-function croppedProcessedCanvasAlt(rect=cropRect){
- const img=cropImage;
- const sx=Math.round(img.naturalWidth*rect.x),sy=Math.round(img.naturalHeight*rect.y);
- const sw=Math.max(1,Math.round(img.naturalWidth*rect.w)),sh=Math.max(1,Math.round(img.naturalHeight*rect.h));
- let scale=Math.max(1,Math.min(6,1900/sw));
- if(sw<700)scale=Math.min(7,scale*1.3);
- const c=document.createElement('canvas');
- c.width=Math.max(1,Math.round(sw*scale));
- c.height=Math.max(1,Math.round(sh*scale));
- const x=c.getContext('2d',{willReadFrequently:true});
- x.imageSmoothingEnabled=true;
- x.imageSmoothingQuality='high';
- x.drawImage(img,sx,sy,sw,sh,0,0,c.width,c.height);
- const d=x.getImageData(0,0,c.width,c.height),p=d.data;
- let sum=0;
- for(let i=0;i<p.length;i+=4){
-   const g=Math.round(.299*p[i]+.587*p[i+1]+.114*p[i+2]);
-   p[i]=p[i+1]=p[i+2]=g;
-   sum+=g;
- }
- const mean=sum/(c.width*c.height);
- const threshold=Math.max(95,Math.min(190,mean*.88));
- for(let i=0;i<p.length;i+=4){
-   const v=p[i]<threshold?0:255;
-   p[i]=p[i+1]=p[i+2]=v;
- }
- x.putImageData(d,0,0);
- return c;
-}
-
-function mergeOcr(primary,secondary){
- const out={...primary};
- const keys=['al','acd','k','tk','k1','k2','tk1','tk2','se','tse'];
- keys.forEach(k=>{if(out[k]==null&&secondary[k]!=null)out[k]=secondary[k]});
- if(out.selectedK==null&&secondary.selectedK!=null)out.selectedK=secondary.selectedK;
- if(out.selectedSource==null&&secondary.selectedSource!=null)out.selectedSource=secondary.selectedSource;
- const both=out.k!=null&&out.tk!=null;
- if(!both&&out.selectedK==null){
-   if(out.tk!=null&&out.k==null){out.selectedK=out.tk;out.selectedSource='TK'}
-   else if(out.k!=null&&out.tk==null){out.selectedK=out.k;out.selectedSource='K'}
- }
- return out;
-}
 
 async function runCropOcr(){
  if(!cropImage)return;
 
+ // Freeze exactly what the user sees BEFORE any async work or layout change.
  const visualRect=getVisualCropRect();
  cropRect={...visualRect};
  const frozenCanvas=croppedProcessedCanvas(visualRect);
- const frozenCanvasAlt=croppedProcessedCanvasAlt(visualRect);
 
  const status=document.getElementById('ocrStatus');
+
+ // Leave crop mode only after the selected pixels have already been frozen.
  document.getElementById('cropPanel').classList.remove('show');
  unlockCropScreen();
 
  const ok=await loadTesseract();
  if(!ok){
-   status.textContent='Could not load the recognition engine. Use “Re-crop” to try the same image again.';
+   status.textContent='자동 인식 엔진을 불러오지 못했습니다. “다시 Crop”으로 같은 사진을 다시 선택할 수 있습니다.';
    renderOcr();
    showOcrReviewCentered();
    return;
  }
 
  try{
-   status.textContent='Recognizing selection…';
-   const result1=await Tesseract.recognize(frozenCanvas,'eng',{
-     logger:m=>{if(m.status==='recognizing text')status.textContent=`Recognizing selection… ${Math.round((m.progress||0)*100)}%`},
+   const result=await Tesseract.recognize(frozenCanvas,'eng',{
+     logger:m=>{if(m.status==='recognizing text')status.textContent=`선택 영역 인식 중… ${Math.round((m.progress||0)*100)}%`},
      tessedit_pageseg_mode:11,
      preserve_interword_spaces:'1',
      user_defined_dpi:'300'
    });
-
-   let parsed1=parseBiometry(result1.data.text||'');
-   ocr=parsed1;
-
-   if(parsed1.al==null || (parsed1.k==null && parsed1.tk==null) || parsed1.acd==null){
-     status.textContent='Improving recognition…';
-     const result2=await Tesseract.recognize(frozenCanvasAlt,'eng',{
-       logger:m=>{if(m.status==='recognizing text')status.textContent=`Improving recognition… ${Math.round((m.progress||0)*100)}%`},
-       tessedit_pageseg_mode:6,
-       preserve_interword_spaces:'1',
-       user_defined_dpi:'300'
-     });
-     const parsed2=parseBiometry(result2.data.text||'');
-     ocr=mergeOcr(parsed1,parsed2);
-   }
-
-   status.textContent='Recognition complete — please review the values below.';
+   ocr=parseBiometry(result.data.text||'');
+   status.textContent='인식 완료 — 아래 값을 확인해주세요.';
    renderOcr();
    showOcrReviewCentered();
  }catch(err){
    console.error(err);
-   status.textContent='Recognition failed. Use “Re-crop” to select the area again on the same image.';
+   status.textContent='자동 인식에 실패했습니다. “다시 Crop”으로 같은 사진에서 영역을 다시 선택해주세요.';
    renderOcr();
    showOcrReviewCentered();
  }
