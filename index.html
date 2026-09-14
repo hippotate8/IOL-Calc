@@ -9,7 +9,7 @@
 <link rel="manifest" href="manifest.webmanifest">
 <meta name="theme-color" content="#008991">
 <title>IOL Formula Selector</title>
-<meta name="app-version" content="27.0">
+<meta name="app-version" content="28.0">
 <style>
 :root{--teal:#008991;--teal2:#00747b;--mint:#edfafa;--line:#dce8e8;--text:#172227;--muted:#68777d}
 *{box-sizing:border-box} body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Noto Sans KR",Arial,sans-serif;color:var(--text);background:#f7f9f9}.app{max-width:1120px;margin:0 auto;min-height:100vh;background:#fff}
@@ -279,12 +279,15 @@ function normalizeOcrLabels(t){
   .replace(/\bA\s+L\b/gi,'AL')
   .replace(/\bA[C6GQ]\s*[D0O]\b/gi,'ACD').replace(/\bAC[0OQ]\b/gi,'ACD').replace(/\bAOD\b/gi,'ACD').replace(/\bA.?C.?[D0O]\b/gi,'ACD')
   .replace(/\bA\s*C\s*D\b/gi,'ACD')
-  .replace(/\bK\s*[Il|]\b/gi,'K1')
-  .replace(/\bK\s*[Zz]\b/gi,'K2')
-  .replace(/\bT\s*K\s*[Il|]\b/gi,'TK1')
-  .replace(/\bT\s*K\s*[Zz]\b/gi,'TK2')
-  .replace(/\bS\s*[E3]\b/gi,'SE')
-  .replace(/\bT\s*S\s*[E3]\b/gi,'TSE');
+  /* IOLMaster/biometer keratometry label normalization */
+  .replace(/\bT\s*[S5]\s*[E3]\b/gi,'TSE')
+  .replace(/\bT\s*K\s*[1Il|]\b/gi,'TK1')
+  .replace(/\bT\s*K\s*[2Zz]\b/gi,'TK2')
+  .replace(/\bK\s*[1Il|]\b/gi,'K1')
+  .replace(/\bK\s*[2Zz]\b/gi,'K2')
+  .replace(/\b[S5]\s*[E3]\b/gi,'SE')
+  .replace(/\bK\s*FLAT\b|\bFLAT\s*K\b|\bKF\b/gi,'K1')
+  .replace(/\bK\s*STEEP\b|\bSTEEP\s*K\b|\bKS\b/gi,'K2');
 }
 function looseLabeledNumber(text,labelRe,min,max){
  const lines=normalizeOcrLabels(text).split(/\n+/).map(x=>x.trim()).filter(Boolean);
@@ -310,6 +313,27 @@ function nearestNumber(text,labelRegex,min,max){
  }}return null;
 }
 function val(text,re,min=30,max=60){const m=cleanText(text).match(re);if(!m)return null;return plausible(parseFloat(m[1]),[min,max])}
+function labeledDiopter(text,labelRe,min=30,max=60){
+ const lines=normalizeOcrLabels(text).split(/\n+/);
+ for(let i=0;i<lines.length;i++){
+   labelRe.lastIndex=0;
+   if(!labelRe.test(lines[i]))continue;
+   // Prefer a value after the label on the same line.
+   labelRe.lastIndex=0;
+   const m=lines[i].match(labelRe);
+   if(m){
+     const tail=lines[i].slice(m.index+m[0].length).replace(/(?:SD|S\.D\.).*$/i,'');
+     const same=numsIn(tail,min,max);
+     if(same.length)return same[0];
+   }
+   // Some reports place the value on the next OCR line.
+   if(i+1<lines.length){
+     const next=numsIn(lines[i+1].replace(/(?:SD|S\.D\.).*$/i,''),min,max);
+     if(next.length)return next[0];
+   }
+ }
+ return null;
+}
 function parseBiometry(text){
  const t=normalizeOcrLabels(text);
 
@@ -319,26 +343,31 @@ function parseBiometry(text){
  let acd=nearestNumber(t,/\b(?:ACD|ANTERIOR\s*CHAMBER\s*DEPTH)\b/i,...PHYS.acd);
  if(acd==null)acd=looseLabeledNumber(t,/\bACD\b/i,...PHYS.acd);
 
- const se=val(t,/(?:^|\n)\s*SE\s*[:=]?\s*(\d{2}(?:\.\d{1,3})?)/im);
- const tse=val(t,/(?:^|\n)\s*TSE\s*[:=]?\s*(\d{2}(?:\.\d{1,3})?)/im);
- const k1=val(t,/\bK\s*1\b[^\d]{0,24}(\d{2}(?:\.\d{1,3})?)/i);
- const k2=val(t,/\bK\s*2\b[^\d]{0,24}(\d{2}(?:\.\d{1,3})?)/i);
- const tk1=val(t,/\bT\s*K\s*1\b[^\d]{0,24}(\d{2}(?:\.\d{1,3})?)/i);
- const tk2=val(t,/\bT\s*K\s*2\b[^\d]{0,24}(\d{2}(?:\.\d{1,3})?)/i);
+ // IOLMaster 700: SE = mean conventional K, TSE = mean total K.
+ // Search labels anywhere on the OCR line, not only at the line start.
+ const tse=labeledDiopter(t,/\bTSE\b/i);
+ const se=labeledDiopter(t,/\bSE\b/i);
 
- let meanK=val(t,/(?:^|\n)\s*(?:KM|K\s*MEAN|MEAN\s*K|AVG\.?\s*K|K\s*AVG|K)\s*[:=]?\s*(\d{2}(?:\.\d{1,3})?)/im);
- let meanTK=val(t,/(?:^|\n)\s*(?:TKM|TK\s*MEAN|MEAN\s*TK|AVG\.?\s*TK|TK\s*AVG|TK)\s*[:=]?\s*(\d{2}(?:\.\d{1,3})?)/im);
+ // Common output labels on IOLMaster, ARGOS, Aladdin, Lenstar/EyeSuite and similar biometers.
+ const tk1=labeledDiopter(t,/\bTK1\b/i);
+ const tk2=labeledDiopter(t,/\bTK2\b/i);
+ const k1=labeledDiopter(t,/\bK1\b/i);
+ const k2=labeledDiopter(t,/\bK2\b/i);
 
- const looksIOLMaster=/IOL\s*MASTER|IOLMASTER|\bTSE\b|\bTK1\b/i.test(t);
- let k=looksIOLMaster&&se!=null?se:(meanK!=null?meanK:(k1!=null&&k2!=null?(k1+k2)/2:null));
- let tk=looksIOLMaster&&tse!=null?tse:(meanTK!=null?meanTK:(tk1!=null&&tk2!=null?(tk1+tk2)/2:null));
+ let meanTK=labeledDiopter(t,/\b(?:TKM|TK\s*MEAN|MEAN\s*TK|AVG\.?\s*TK|TK\s*AVG|TK)\b/i);
+ let meanK=labeledDiopter(t,/\b(?:KM|K\s*MEAN|MEAN\s*K|AVG\.?\s*K|K\s*AVG|MEAN\s*KERATOMETRY)\b/i);
+
+ // Do not require the device name: SE/TSE labels themselves are sufficiently specific.
+ let k=se!=null?se:(meanK!=null?meanK:(k1!=null&&k2!=null?(k1+k2)/2:null));
+ let tk=tse!=null?tse:(meanTK!=null?meanTK:(tk1!=null&&tk2!=null?(tk1+tk2)/2:null));
 
  if(k==null&&k1!=null&&k2!=null)k=(k1+k2)/2;
  if(tk==null&&tk1!=null&&tk2!=null)tk=(tk1+tk2)/2;
 
  // Loose K fallback: search around K/SE label, but keep physiologic range.
  if(k==null){
-  const kv=looseLabeledNumber(t,/(?:^|\s)(?:SE|K|K1|K2)(?:\s|$)/i,30,60);
+  const lines=t.split(/\n+/).filter(x=>! /\b(?:TSE|TK|TK1|TK2)\b/i.test(x));
+  const kv=looseLabeledNumber(lines.join('\n'),/(?:^|\s)(?:SE|K|K1|K2)(?:\s|$)/i,30,60);
   if(kv!=null)k=kv;
  }
  if(tk==null){
@@ -408,9 +437,17 @@ function parseBiometry(text){
  }
  if(k==null){
    for(const ln of rawLines){
-     if(/(?:^|\s)(?:SE|K|K1|K2)(?:\s|$)/i.test(ln)){
+     if(!/\b(?:TSE|TK|TK1|TK2)\b/i.test(ln) && /(?:^|\s)(?:SE|K|K1|K2)(?:\s|$)/i.test(ln)){
        const m=ln.match(/\b([3-5]\d{3})\b/);
        if(m){const v=Number(m[1])/100;if(v>=30&&v<=60){k=v;break}}
+     }
+   }
+ }
+ if(tk==null){
+   for(const ln of rawLines){
+     if(/(?:^|\s)(?:TSE|TK|TK1|TK2)(?:\s|$)/i.test(ln)){
+       const m=ln.match(/\b([3-5]\d{3})\b/);
+       if(m){const v=Number(m[1])/100;if(v>=30&&v<=60){tk=v;break}}
      }
    }
  }
